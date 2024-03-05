@@ -23,7 +23,7 @@ import com.google.firebase.database.DatabaseReference;
 import org.checkerframework.common.initializedfields.qual.InitializedFields;
 
 public class LoginActivity extends AppCompatActivity {
-    private FirebaseUser currentUser;
+
     private Button LoginButton, PhoneLoginButton;
     private EditText UserEmail, UserPassword;
     private TextView NeedNewAccountLink, ForgetPasswordLink;
@@ -125,14 +125,7 @@ public class LoginActivity extends AppCompatActivity {
     }
 
 
-    @Override
-    protected void onStart() {
-        super.onStart();
 
-        if (currentUser != null) {
-            SendUserToMainActivity();
-        }
-    }
 
     private void SendUserToMainActivity()
     {
