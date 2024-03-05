@@ -26,7 +26,8 @@ public class RegisterActivity extends AppCompatActivity {
     private TextView AlreadyHaveAccountLink;
     private ProgressDialog loadingBar;
     private FirebaseAuth mAuth;
-    //private DatabaseReference RootRef;
+    FirebaseDatabase database;
+    private DatabaseReference RootRef;
 
 
     @Override
@@ -35,7 +36,8 @@ public class RegisterActivity extends AppCompatActivity {
         setContentView(R.layout.activity_register);
 
         mAuth = FirebaseAuth.getInstance();
-        //RootRef = FirebaseDatabase.getInstance().getReference();
+        database = FirebaseDatabase.getInstance();
+        RootRef = database.getReference();
 
 
         InitializeFields();
@@ -97,14 +99,14 @@ public class RegisterActivity extends AppCompatActivity {
                                 //String deviceToken = FirebaseInstanceId.getInstance().getToken();
 
                                 String currentUserID = mAuth.getCurrentUser().getUid();
-                                //RootRef.child("Users").child(currentUserID).setValue("");
-
+                                RootRef.child("Users").child(currentUserID).setValue("");
 
                                 //RootRef.child("Users").child(currentUserID).child("device_token")
                                 //        .setValue(deviceToken);
 
                                 SendUserToMainActivity();
-                                Toast.makeText(RegisterActivity.this, "Account Created Successfully...", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(RegisterActivity.this, currentUserID, Toast.LENGTH_SHORT).show();
+                                //Toast.makeText(RegisterActivity.this, "Account Created Successfully...", Toast.LENGTH_SHORT).show();
                                 loadingBar.dismiss();
                             }
                             else
