@@ -76,7 +76,7 @@ public class MainActivity extends AppCompatActivity {
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 //check name? -> check uid
                 if(snapshot.child("uid").exists()){
-                    Toast.makeText(MainActivity.this, "Welcom", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(MainActivity.this, "Welcome", Toast.LENGTH_SHORT).show();
                 } else {
                     SendUserToSettingActivity();
                 }
