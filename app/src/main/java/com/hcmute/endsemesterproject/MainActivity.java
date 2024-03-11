@@ -1,10 +1,5 @@
 package com.hcmute.endsemesterproject;
 
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
-import androidx.viewpager.widget.ViewPager;
-
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -14,6 +9,11 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.EditText;
 import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
+import androidx.viewpager.widget.ViewPager;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
@@ -27,7 +27,6 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
 public class MainActivity extends AppCompatActivity {
-    private Toolbar mToolbar;
     private ViewPager myViewPager;
     private TabLayout myTabLayout;
     private  TabAccessorAdapter mytabAccessorAdapter;
@@ -46,7 +45,7 @@ public class MainActivity extends AppCompatActivity {
         currentUserID = mAuth.getCurrentUser().getUid();
         RootRef = FirebaseDatabase.getInstance().getReference();
 
-        mToolbar = (Toolbar) findViewById(R.id.main_page_toolbar);
+        Toolbar mToolbar = (Toolbar) findViewById(R.id.main_page_toolbar);
         setSupportActionBar(mToolbar);
         getSupportActionBar().setTitle("ChatsApp");
 
@@ -112,6 +111,11 @@ public class MainActivity extends AppCompatActivity {
         if (item.getItemId() == R.id.main_create_group_option) {
             RequestNewGroup();
         }
+
+        if (item.getItemId() == R.id.main_find_friends_option)
+        {
+            SendUserToFindFriendsActivity();
+        }
         return true;
     }
 
@@ -175,5 +179,10 @@ public class MainActivity extends AppCompatActivity {
         settingIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(settingIntent);
         finish();
+    }
+
+    private void SendUserToFindFriendsActivity() {
+        Intent findFriendsIntent = new Intent(MainActivity.this, FindFriendsActivity.class);
+        startActivity(findFriendsIntent);
     }
 }
