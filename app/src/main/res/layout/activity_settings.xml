@@ -6,6 +6,7 @@
     android:layout_height="match_parent"
     tools:context=".SettingsActivity">
 
+
     <include
         layout="@layout/app_bar_layout"
         android:id="@+id/settings_toolbar"
@@ -78,4 +79,5 @@
         android:textAllCaps="false"
         android:textSize="20sp"
         />
+
 </RelativeLayout>
