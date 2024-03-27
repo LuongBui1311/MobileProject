@@ -1,10 +1,11 @@
-package com.hcmute.endsemesterproject;
+package com.hcmute.endsemesterproject.Controllers;
 
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.os.Bundle;
 import android.widget.ImageView;
 
+import com.hcmute.endsemesterproject.R;
 import com.squareup.picasso.Picasso;
 
 public class ImageViewerActivity extends AppCompatActivity {

@@ -1,10 +1,9 @@
-package com.hcmute.endsemesterproject;
+package com.hcmute.endsemesterproject.Adapters;
 
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
 import android.net.Uri;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -24,6 +23,10 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.hcmute.endsemesterproject.Controllers.ImageViewerActivity;
+import com.hcmute.endsemesterproject.Controllers.MainActivity;
+import com.hcmute.endsemesterproject.Models.Messages;
+import com.hcmute.endsemesterproject.R;
 import com.squareup.picasso.Picasso;
 
 import java.util.List;

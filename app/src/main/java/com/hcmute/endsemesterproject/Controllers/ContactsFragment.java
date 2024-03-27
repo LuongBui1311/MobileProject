@@ -1,4 +1,4 @@
-package com.hcmute.endsemesterproject;
+package com.hcmute.endsemesterproject.Controllers;
 
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -20,6 +20,8 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.hcmute.endsemesterproject.Models.Contacts;
+import com.hcmute.endsemesterproject.R;
 import com.squareup.picasso.Picasso;
 
 import de.hdodenhof.circleimageview.CircleImageView;

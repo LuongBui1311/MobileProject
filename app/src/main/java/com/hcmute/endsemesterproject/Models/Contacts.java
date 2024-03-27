@@ -1,4 +1,4 @@
-package com.hcmute.endsemesterproject;
+package com.hcmute.endsemesterproject.Models;
 
 public class Contacts {
     public String name, status, image;

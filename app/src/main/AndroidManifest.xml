@@ -14,15 +14,15 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.EndSemesterProject">
         <activity
-            android:name=".ImageViewerActivity"
+            android:name=".Controllers.ImageViewerActivity"
             android:exported="false" />
         <activity
-            android:name=".ChatActivity"
+            android:name=".Controllers.ChatActivity"
             android:exported="false"
-            android:parentActivityName=".MainActivity" />
-        <activity android:name=".MainActivity"></activity>
+            android:parentActivityName=".Controllers.MainActivity" />
+        <activity android:name=".Controllers.MainActivity"></activity>
         <activity
-            android:name=".LoginActivity"
+            android:name=".Controllers.LoginActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -30,19 +30,19 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".RegisterActivity" />
+        <activity android:name=".Controllers.RegisterActivity" />
         <activity
-            android:name=".SettingsActivity"
-            android:parentActivityName=".MainActivity" />
-        <activity android:name=".GroupChatActivity" />
-        <activity android:name=".PhoneLoginActivity" />
+            android:name=".Controllers.SettingsActivity"
+            android:parentActivityName=".Controllers.MainActivity" />
+        <activity android:name=".Controllers.GroupChatActivity" />
+        <activity android:name=".Controllers.PhoneLoginActivity" />
         <activity
             android:name="com.theartofdev.edmodo.cropper.CropImageActivity"
             android:theme="@style/Base.Theme.AppCompat" />
         <activity
-            android:name=".FindFriendsActivity"
-            android:parentActivityName=".MainActivity" />
-        <activity android:name=".ProfileActivity" />
+            android:name=".Controllers.FindFriendsActivity"
+            android:parentActivityName=".Controllers.MainActivity" />
+        <activity android:name=".Controllers.ProfileActivity" />
     </application>
 
 </manifest>
