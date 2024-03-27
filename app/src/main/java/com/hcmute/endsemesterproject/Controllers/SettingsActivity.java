@@ -68,9 +68,7 @@ public class SettingsActivity extends AppCompatActivity
 
         InitializeFields();
 
-
-        userName.setVisibility(View.INVISIBLE);
-
+        //userName.setVisibility(View.INVISIBLE);
 
         UpdateAccountSettings.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -112,9 +110,6 @@ public class SettingsActivity extends AppCompatActivity
         getSupportActionBar().setDisplayShowCustomEnabled(true);
         getSupportActionBar().setTitle("Account Settings");
     }
-
-
-
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data)
@@ -170,7 +165,7 @@ public class SettingsActivity extends AppCompatActivity
 
                                     RootRef.child("Users").child(currentUserID).child("image")
                                             .setValue(downloadURL);
-                                    Toast.makeText(SettingsActivity.this , "Data Successfully Uploaded" , Toast.LENGTH_SHORT).show();
+                                    //Toast.makeText(SettingsActivity.this , "Data Successfully Uploaded" , Toast.LENGTH_SHORT).show();
                                     loadingBar.dismiss();
                                 } else {
                                     // Handle failures
@@ -185,9 +180,6 @@ public class SettingsActivity extends AppCompatActivity
         }
     }
 
-
-
-
     private void UpdateSettings()
     {
         String setUserName = userName.getText().toString();
@@ -195,11 +187,7 @@ public class SettingsActivity extends AppCompatActivity
 
         if (TextUtils.isEmpty(setUserName))
         {
-            Toast.makeText(this, "Please write your user name first....", Toast.LENGTH_SHORT).show();
-        }
-        if (TextUtils.isEmpty(setStatus))
-        {
-            Toast.makeText(this, "Please write your status....", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Please write your user name first", Toast.LENGTH_SHORT).show();
         }
         else
         {
@@ -215,7 +203,7 @@ public class SettingsActivity extends AppCompatActivity
                             if (task.isSuccessful())
                             {
                                 SendUserToMainActivity();
-                                Toast.makeText(SettingsActivity.this, "Profile Updated Successfully...", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(SettingsActivity.this, "Profile Updated Successfully", Toast.LENGTH_SHORT).show();
                             }
                             else
                             {
@@ -227,48 +215,44 @@ public class SettingsActivity extends AppCompatActivity
         }
     }
 
-
-
     private void RetrieveUserInfo()
     {
+
         RootRef.child("Users").child(currentUserID)
                 .addValueEventListener(new ValueEventListener() {
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot)
                     {
-                        if ((dataSnapshot.exists()) && (dataSnapshot.hasChild("name") && (dataSnapshot.hasChild("image"))))
-                        {
-                            String retrieveUserName = dataSnapshot.child("name").getValue().toString();
-                            String retrievesStatus = dataSnapshot.child("status").getValue().toString();
-                            String retrieveProfileImage = dataSnapshot.child("image").getValue().toString();
+                        if(dataSnapshot.exists()){
 
-                            userName.setText(retrieveUserName);
-                            userStatus.setText(retrievesStatus);
-                            Picasso.get().load(retrieveProfileImage).into(userProfileImage);
-                        }
-                        else if ((dataSnapshot.exists()) && (dataSnapshot.hasChild("name")))
-                        {
-                            String retrieveUserName = dataSnapshot.child("name").getValue().toString();
-                            String retrievesStatus = dataSnapshot.child("status").getValue().toString();
+                            if(dataSnapshot.hasChild("image")){
+                                String retrieveProfileImage = dataSnapshot.child("image").getValue().toString();
+                                Picasso.get().load(retrieveProfileImage).into(userProfileImage);
+                            }
 
-                            userName.setText(retrieveUserName);
-                            userStatus.setText(retrievesStatus);
-                        }
-                        else
-                        {
-                            userName.setVisibility(View.VISIBLE);
-                            Toast.makeText(SettingsActivity.this, "Please set & update your profile information...", Toast.LENGTH_SHORT).show();
+                            if(dataSnapshot.hasChild("status")){
+                                String retrievesStatus = dataSnapshot.child("status").getValue().toString();
+                                userStatus.setText(retrievesStatus);
+                            }
+
+                            if(dataSnapshot.hasChild("name")){
+                                String retrieveUserName = dataSnapshot.child("name").getValue().toString();
+                                userName.setText(retrieveUserName);
+                            }
+                            else
+                            {
+                                userName.setVisibility(View.VISIBLE);
+                                Toast.makeText(SettingsActivity.this, "Please update your profile information", Toast.LENGTH_SHORT).show();
+                            }
                         }
                     }
 
                     @Override
                     public void onCancelled(DatabaseError databaseError) {
-
+                        Toast.makeText(SettingsActivity.this, "Cancel", Toast.LENGTH_SHORT).show();
                     }
                 });
     }
-
-
 
     private void SendUserToMainActivity()
     {
