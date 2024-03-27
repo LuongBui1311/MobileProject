@@ -1,4 +1,4 @@
-package com.hcmute.endsemesterproject;
+package com.hcmute.endsemesterproject.Controllers;
 
 import android.app.ProgressDialog;
 import android.content.Intent;
@@ -27,6 +27,7 @@ import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
+import com.hcmute.endsemesterproject.R;
 import com.squareup.picasso.Picasso;
 import com.theartofdev.edmodo.cropper.CropImage;
 import com.theartofdev.edmodo.cropper.CropImageView;

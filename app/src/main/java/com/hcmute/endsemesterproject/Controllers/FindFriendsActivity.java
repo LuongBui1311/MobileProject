@@ -1,4 +1,4 @@
-package com.hcmute.endsemesterproject;
+package com.hcmute.endsemesterproject.Controllers;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -17,6 +17,8 @@ import com.firebase.ui.database.FirebaseRecyclerAdapter;
 import com.firebase.ui.database.FirebaseRecyclerOptions;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.hcmute.endsemesterproject.Models.Contacts;
+import com.hcmute.endsemesterproject.R;
 import com.squareup.picasso.Picasso;
 
 import de.hdodenhof.circleimageview.CircleImageView;
@@ -63,7 +65,6 @@ public class FindFriendsActivity extends AppCompatActivity {
                         holder.userName.setText(model.getName());
                         holder.userStatus.setText(model.getStatus());
                         Picasso.get().load(model.getImage()).placeholder(R.drawable.profile_image).into(holder.profileImage);
-
 
                         holder.itemView.setOnClickListener(new View.OnClickListener() {
                             @Override

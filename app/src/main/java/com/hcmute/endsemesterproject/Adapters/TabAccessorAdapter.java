@@ -1,10 +1,14 @@
-package com.hcmute.endsemesterproject;
+package com.hcmute.endsemesterproject.Adapters;
 
-import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentPagerAdapter;
+
+import com.hcmute.endsemesterproject.Controllers.ChatsFragment;
+import com.hcmute.endsemesterproject.Controllers.ContactsFragment;
+import com.hcmute.endsemesterproject.Controllers.GroupsFragment;
+import com.hcmute.endsemesterproject.Controllers.RequestsFragment;
 
 public class TabAccessorAdapter extends FragmentPagerAdapter
 {
