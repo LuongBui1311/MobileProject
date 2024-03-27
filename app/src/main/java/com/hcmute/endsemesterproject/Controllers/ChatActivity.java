@@ -421,12 +421,23 @@ public class ChatActivity extends AppCompatActivity
                     {
                         Messages messages = dataSnapshot.getValue(Messages.class);
 
-                        messagesList.add(messages);
+                        // Check if the message already exists in the list
+                        boolean exists = false;
+                        for (Messages msg : messagesList) {
+                            if (msg.getMessageID().equals(messages.getMessageID())) {
+                                exists = true;
+                                break;
+                            }
+                        }
 
-                        messageAdapter.notifyDataSetChanged();
-
-                        userMessagesList.smoothScrollToPosition(userMessagesList.getAdapter().getItemCount());
+                        // Add the message to the list if it doesn't exist
+                        if (!exists) {
+                            messagesList.add(messages);
+                            messageAdapter.notifyDataSetChanged();
+                            userMessagesList.smoothScrollToPosition(userMessagesList.getAdapter().getItemCount());
+                        }
                     }
+
 
                     @Override
                     public void onChildChanged(DataSnapshot dataSnapshot, String s) {
