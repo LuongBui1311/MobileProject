@@ -3,7 +3,6 @@ package com.hcmute.endsemesterproject.Controllers;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,8 +15,6 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.firebase.ui.database.FirebaseRecyclerAdapter;
 import com.firebase.ui.database.FirebaseRecyclerOptions;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -70,20 +67,16 @@ public class FindFriendsActivity extends AppCompatActivity {
         FindFriendsRecyclerList = (RecyclerView) findViewById(R.id.find_friends_recycler_list);
         FindFriendsRecyclerList.setLayoutManager(new LinearLayoutManager(this));
 
-
         mToolbar = (Toolbar) findViewById(R.id.find_friends_toolbar);
         setSupportActionBar(mToolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         getSupportActionBar().setDisplayShowHomeEnabled(true);
         getSupportActionBar().setTitle("Find Friends");
     }
-
     @Override
     protected void onStart()
     {
         super.onStart();
-        System.out.println("Find Friend Start " + this.toString());
-
 
         FirebaseRecyclerOptions<Contacts> options =
                 new FirebaseRecyclerOptions.Builder<Contacts>()
@@ -98,39 +91,45 @@ public class FindFriendsActivity extends AppCompatActivity {
                         DataSnapshot snapshot =  getSnapshots().getSnapshot(position);
                         String id = snapshot.getKey();
 
-                        if (currentUserId.equals(id)){
-                            holder.itemView.setVisibility(View.INVISIBLE);
-                            holder.itemView.getLayoutParams().height = 0;
-                            holder.itemView.getLayoutParams().width = 0;
-                        } else {
-                            for (String contactId:
-                                 contactIdList) {
-                                if (contactId.equals(id)){
-                                    holder.itemView.setVisibility(View.INVISIBLE);
-                                    holder.itemView.getLayoutParams().height = 0;
-                                    holder.itemView.getLayoutParams().width = 0;
+                        UsersRef.child(id).addValueEventListener(new ValueEventListener() {
+                            @Override
+                            public void onDataChange(@androidx.annotation.NonNull DataSnapshot snapshot) {
+                                if (!snapshot.child("name").exists()){
+                                    hideUser(holder);
+                                } else {
+                                    if (currentUserId.equals(id)){
+                                        hideUser(holder);
+                                    } else {
+                                        for (String contactId:
+                                                contactIdList) {
+                                            if (contactId.equals(id)){
+                                                hideUser(holder);
+                                            }
+                                        }
+                                        holder.userName.setText(model.getName());
+                                        holder.userStatus.setText(model.getStatus());
+                                        Picasso.get().load(model.getImage()).placeholder(R.drawable.profile_image).into(holder.profileImage);
+
+                                        holder.itemView.setOnClickListener(new View.OnClickListener() {
+                                            @Override
+                                            public void onClick(View view)
+                                            {
+                                                String visit_user_id = getRef(position).getKey();
+
+                                                Intent profileIntent = new Intent(FindFriendsActivity.this, ProfileActivity.class);
+                                                //pass data into ProfileActivity
+                                                profileIntent.putExtra("visit_user_id", visit_user_id);
+                                                startActivity(profileIntent);
+                                            }
+                                        });
+                                    }
                                 }
                             }
-                            holder.userName.setText(model.getName());
-                            holder.userStatus.setText(model.getStatus());
-                            Picasso.get().load(model.getImage()).placeholder(R.drawable.profile_image).into(holder.profileImage);
-
-
-                            holder.itemView.setOnClickListener(new View.OnClickListener() {
-                                @Override
-                                public void onClick(View view)
-                                {
-                                    String visit_user_id = getRef(position).getKey();
-
-                                    Intent profileIntent = new Intent(FindFriendsActivity.this, ProfileActivity.class);
-                                    //pass data into ProfileActivity
-                                    profileIntent.putExtra("visit_user_id", visit_user_id);
-                                    startActivity(profileIntent);
-                                }
-                            });
-                        }
+                            @Override
+                            public void onCancelled(@androidx.annotation.NonNull DatabaseError error) {
+                            }
+                        });
                     }
-
                     @NonNull
                     @Override
                     public FindFriendViewHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int i)
@@ -140,18 +139,18 @@ public class FindFriendsActivity extends AppCompatActivity {
                         return viewHolder;
                     }
                 };
-
         FindFriendsRecyclerList.setAdapter(adapter);
-
         adapter.startListening();
     }
-
+    private void hideUser(FindFriendViewHolder holder) {
+        holder.itemView.setVisibility(View.INVISIBLE);
+        holder.itemView.getLayoutParams().height = 0;
+        holder.itemView.getLayoutParams().width = 0;
+    }
     public static class FindFriendViewHolder extends RecyclerView.ViewHolder
     {
         TextView userName, userStatus;
         CircleImageView profileImage;
-
-
         public FindFriendViewHolder(@NonNull View itemView)
         {
             super(itemView);
