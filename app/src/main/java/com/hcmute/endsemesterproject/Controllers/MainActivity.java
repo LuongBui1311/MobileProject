@@ -72,7 +72,6 @@ public class MainActivity extends AppCompatActivity
         myTabLayout.setupWithViewPager(myViewPager);
     }
 
-
     @Override
     protected void onStart()
     {
@@ -85,43 +84,14 @@ public class MainActivity extends AppCompatActivity
         else
         {
             updateUserStatus("online");
-
             VerifyUserExistance();
         }
     }
 
-
-    @Override
-    protected void onStop()
-    {
-        super.onStop();
-
-        if (currentUser != null)
-        {
-            updateUserStatus("offline");
-        }
-    }
-
-
-
-    @Override
-    protected void onDestroy()
-    {
-        super.onDestroy();
-
-        if (currentUser != null)
-        {
-            updateUserStatus("offline");
-        }
-    }
-
-
-
     private void VerifyUserExistance()
     {
         String currentUserID = mAuth.getCurrentUser().getUid();
-
-        RootRef.child("Users").child(currentUserID).addValueEventListener(new ValueEventListener() {
+        RootRef.child("Users").child(currentUserID).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot)
             {
