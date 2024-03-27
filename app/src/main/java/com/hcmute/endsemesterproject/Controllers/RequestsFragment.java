@@ -4,7 +4,6 @@ import android.content.DialogInterface;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -46,7 +45,6 @@ public class RequestsFragment extends Fragment
     public RequestsFragment() {
         // Required empty public constructor
     }
-
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
@@ -64,8 +62,6 @@ public class RequestsFragment extends Fragment
 
         return RequestsFragmentView;
     }
-
-
     @Override
     public void onStart()
     {
@@ -115,7 +111,7 @@ public class RequestsFragment extends Fragment
                                                 cancelButton.setOnClickListener(new View.OnClickListener() {
                                                     @Override
                                                     public void onClick(View v) {
-                                                        cancelRequest(currentUserID, list_user_id);
+                                                        cancelRequest(currentUserID, list_user_id, "You have cancelled the chat request.");
                                                     }
                                                 });
                                             }
@@ -141,7 +137,7 @@ public class RequestsFragment extends Fragment
                                                 request_sent_btn.setOnClickListener(new View.OnClickListener() {
                                                     @Override
                                                     public void onClick(View v) {
-                                                        cancelRequest(currentUserID, list_user_id);
+                                                        cancelRequest(currentUserID, list_user_id,"You have cancelled the chat request.");
                                                     }
                                                 });
                                             }
@@ -193,29 +189,7 @@ public class RequestsFragment extends Fragment
                                         {
                                             if (task.isSuccessful())
                                             {
-                                                ChatRequestsRef.child(currentUserID).child(listUserId)
-                                                        .removeValue()
-                                                        .addOnCompleteListener(new OnCompleteListener<Void>() {
-                                                            @Override
-                                                            public void onComplete(@NonNull Task<Void> task)
-                                                            {
-                                                                if (task.isSuccessful())
-                                                                {
-                                                                    ChatRequestsRef.child(listUserId).child(currentUserID)
-                                                                            .removeValue()
-                                                                            .addOnCompleteListener(new OnCompleteListener<Void>() {
-                                                                                @Override
-                                                                                public void onComplete(@NonNull Task<Void> task)
-                                                                                {
-                                                                                    if (task.isSuccessful())
-                                                                                    {
-                                                                                        Toast.makeText(getContext(), "New Contact Saved", Toast.LENGTH_SHORT).show();
-                                                                                    }
-                                                                                }
-                                                                            });
-                                                                }
-                                                            }
-                                                        });
+                                                cancelRequest(currentUserID, listUserId, "New Contact Saved");
                                             }
                                         }
                                     });
@@ -223,7 +197,7 @@ public class RequestsFragment extends Fragment
                     }
                 });
     }
-    private void cancelRequest(String currentUserID, String listUserId) {
+    private void cancelRequest(String currentUserID, String listUserId, String message) {
         ChatRequestsRef.child(currentUserID).child(listUserId)
                 .removeValue()
                 .addOnCompleteListener(new OnCompleteListener<Void>() {
@@ -240,7 +214,7 @@ public class RequestsFragment extends Fragment
                                         {
                                             if (task.isSuccessful())
                                             {
-                                                Toast.makeText(getContext(), "You have cancelled the chat request.", Toast.LENGTH_SHORT).show();
+                                                Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
                                             }
                                         }
                                     });
