@@ -28,6 +28,8 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 import com.hcmute.endsemesterproject.R;
+import com.hcmute.endsemesterproject.Utils.StorageConst;
+import com.hcmute.endsemesterproject.Utils.TableConst;
 import com.squareup.picasso.Picasso;
 import com.theartofdev.edmodo.cropper.CropImage;
 import com.theartofdev.edmodo.cropper.CropImageView;
@@ -63,7 +65,7 @@ public class SettingsActivity extends AppCompatActivity
         mAuth = FirebaseAuth.getInstance();
         currentUserID = mAuth.getCurrentUser().getUid();
         RootRef = FirebaseDatabase.getInstance().getReference();
-        UserProfileImagesRef = FirebaseStorage.getInstance().getReference().child("Profile Images");
+        UserProfileImagesRef = FirebaseStorage.getInstance().getReference().child(StorageConst.DOCUMENT);
 
 
         InitializeFields();
@@ -163,7 +165,7 @@ public class SettingsActivity extends AppCompatActivity
 
                                     // Adding image upload id s child element into databaseReference.
 
-                                    RootRef.child("Users").child(currentUserID).child("image")
+                                    RootRef.child(TableConst.USERS.TABLE_NAME).child(currentUserID).child(TableConst.USERS.IMAGE)
                                             .setValue(downloadURL);
                                     //Toast.makeText(SettingsActivity.this , "Data Successfully Uploaded" , Toast.LENGTH_SHORT).show();
                                     loadingBar.dismiss();
@@ -192,10 +194,10 @@ public class SettingsActivity extends AppCompatActivity
         else
         {
             HashMap<String, Object> profileMap = new HashMap<>();
-            profileMap.put("uid", currentUserID);
-            profileMap.put("name", setUserName);
-            profileMap.put("status", setStatus);
-            RootRef.child("Users").child(currentUserID).updateChildren(profileMap)
+            profileMap.put(TableConst.USERS.UID, currentUserID);
+            profileMap.put(TableConst.USERS.NAME, setUserName);
+            profileMap.put(TableConst.USERS.STATUS, setStatus);
+            RootRef.child(TableConst.USERS.TABLE_NAME).child(currentUserID).updateChildren(profileMap)
                     .addOnCompleteListener(new OnCompleteListener<Void>() {
                         @Override
                         public void onComplete(@NonNull Task<Void> task)
@@ -218,25 +220,25 @@ public class SettingsActivity extends AppCompatActivity
     private void RetrieveUserInfo()
     {
 
-        RootRef.child("Users").child(currentUserID)
+        RootRef.child(TableConst.USERS.TABLE_NAME).child(currentUserID)
                 .addValueEventListener(new ValueEventListener() {
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot)
                     {
                         if(dataSnapshot.exists()){
 
-                            if(dataSnapshot.hasChild("image")){
-                                String retrieveProfileImage = dataSnapshot.child("image").getValue().toString();
+                            if(dataSnapshot.hasChild(TableConst.USERS.IMAGE)){
+                                String retrieveProfileImage = dataSnapshot.child(TableConst.USERS.IMAGE).getValue().toString();
                                 Picasso.get().load(retrieveProfileImage).into(userProfileImage);
                             }
 
-                            if(dataSnapshot.hasChild("status")){
-                                String retrievesStatus = dataSnapshot.child("status").getValue().toString();
+                            if(dataSnapshot.hasChild(TableConst.USERS.STATUS)){
+                                String retrievesStatus = dataSnapshot.child(TableConst.USERS.STATUS).getValue().toString();
                                 userStatus.setText(retrievesStatus);
                             }
 
-                            if(dataSnapshot.hasChild("name")){
-                                String retrieveUserName = dataSnapshot.child("name").getValue().toString();
+                            if(dataSnapshot.hasChild(TableConst.USERS.NAME)){
+                                String retrieveUserName = dataSnapshot.child(TableConst.USERS.NAME).getValue().toString();
                                 userName.setText(retrieveUserName);
                             }
                             else

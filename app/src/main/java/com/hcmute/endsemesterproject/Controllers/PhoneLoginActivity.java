@@ -1,8 +1,5 @@
 package com.hcmute.endsemesterproject.Controllers;
 
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
-
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.Bundle;
@@ -11,6 +8,9 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
@@ -21,8 +21,11 @@ import com.google.firebase.auth.PhoneAuthCredential;
 import com.google.firebase.auth.PhoneAuthOptions;
 import com.google.firebase.auth.PhoneAuthProvider;
 import com.hcmute.endsemesterproject.R;
+import com.hcmute.endsemesterproject.Utils.CommonConst;
 
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class PhoneLoginActivity extends AppCompatActivity {
 
@@ -47,31 +50,14 @@ public class PhoneLoginActivity extends AppCompatActivity {
         inputVerificationCode = (EditText) findViewById(R.id.verification_code_input);
         loadingBar = new ProgressDialog(this);
 
-        sendVerificationCodeButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                String phoneNumber = inputPhoneNumber.getText().toString();
-                if (TextUtils.isEmpty(phoneNumber)){
-                    Toast.makeText(PhoneLoginActivity.this, "Please enter your phone number first...", Toast.LENGTH_SHORT).show();
-                } else {
-                    loadingBar.setTitle("Phone Verification");
-                    loadingBar.setMessage("Please wait while we are authenticating your phone...");
-                    loadingBar.setCanceledOnTouchOutside(false);
-                    loadingBar.show();
+        //handel event
+        createCallBack();
+        handleSendCode();
+        handleVerifyCode();
 
-                    PhoneAuthOptions options =
-                            PhoneAuthOptions.newBuilder(mAuth)
-                                    .setPhoneNumber(phoneNumber)       // Phone number to verify
-                                    .setTimeout(60L, TimeUnit.SECONDS) // Timeout and unit
-                                    .setActivity(PhoneLoginActivity.this)                 // (optional) Activity for callback binding
-                                    // If no activity is passed, reCAPTCHA verification can not be used.
-                                    .setCallbacks(mCallbacks)          // OnVerificationStateChangedCallbacks
-                                    .build();
-                    PhoneAuthProvider.verifyPhoneNumber(options);
-                }
-            }
-        });
+    }
 
+    private void handleVerifyCode(){
         verifyButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -81,7 +67,7 @@ public class PhoneLoginActivity extends AppCompatActivity {
                 String verificationCode = inputVerificationCode.getText().toString();
 
                 if (TextUtils.isEmpty(verificationCode)){
-                    Toast.makeText(PhoneLoginActivity.this, "Please enter verification code first...", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(PhoneLoginActivity.this, "Please enter verification code first", Toast.LENGTH_SHORT).show();
                 } else {
                     loadingBar.setTitle("Code Verification");
                     loadingBar.setMessage("Please wait while we are verifying your verification code...");
@@ -93,7 +79,40 @@ public class PhoneLoginActivity extends AppCompatActivity {
                 }
             }
         });
+    }
 
+    private void handleSendCode(){
+        sendVerificationCodeButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String phoneNumber = inputPhoneNumber.getText().toString();
+                if (TextUtils.isEmpty(phoneNumber)){
+                    Toast.makeText(PhoneLoginActivity.this, "Please enter your phone number first...", Toast.LENGTH_SHORT).show();
+                } else {
+                    if(validPhoneNumber(phoneNumber)){
+                        loadingBar.setTitle("Phone Verification");
+                        loadingBar.setMessage("Please wait while we are authenticating your phone...");
+                        loadingBar.setCanceledOnTouchOutside(false);
+                        loadingBar.show();
+
+                        PhoneAuthOptions options =
+                                PhoneAuthOptions.newBuilder(mAuth)
+                                        .setPhoneNumber(CommonConst.PREFIX.concat(phoneNumber))       // Phone number to verify
+                                        .setTimeout(60L, TimeUnit.SECONDS) // Timeout and unit
+                                        .setActivity(PhoneLoginActivity.this)                 // (optional) Activity for callback binding
+                                        // If no activity is passed, reCAPTCHA verification can not be used.
+                                        .setCallbacks(mCallbacks)          // OnVerificationStateChangedCallbacks
+                                        .build();
+                        PhoneAuthProvider.verifyPhoneNumber(options);
+                    } else
+                        Toast.makeText(PhoneLoginActivity.this, "Phone number is incorrect", Toast.LENGTH_SHORT).show();
+
+                }
+            }
+        });
+    }
+
+    private void createCallBack(){
         mCallbacks = new PhoneAuthProvider.OnVerificationStateChangedCallbacks() {
             @Override
             public void onVerificationCompleted(@NonNull PhoneAuthCredential phoneAuthCredential) {
@@ -113,12 +132,12 @@ public class PhoneLoginActivity extends AppCompatActivity {
                 inputVerificationCode.setVisibility(View.INVISIBLE);
             }
 
-            public void onCodeSent(@NonNull String verificationId,
-                                   @NonNull PhoneAuthProvider.ForceResendingToken token) {
-
+            @Override
+            public void onCodeSent(@NonNull String verificationId, @NonNull PhoneAuthProvider.ForceResendingToken forceResendingToken) {
+                super.onCodeSent(verificationId, forceResendingToken);
                 // Save verification ID and resending token so we can use them later
                 mVerificationId = verificationId;
-                mResendToken = token;
+                mResendToken = forceResendingToken;
 
                 loadingBar.dismiss();
 
@@ -148,6 +167,13 @@ public class PhoneLoginActivity extends AppCompatActivity {
                         }
                     }
                 });
+    }
+
+    private boolean validPhoneNumber(String phone){
+        //Có 9-10 chữ số và chữ số đầu tieen khác 0
+        Pattern pattern = Pattern.compile("^[1-9]\\d{8,9}$");
+        Matcher matcher = pattern.matcher(phone);
+        return matcher.matches();
     }
 
     private void sendUserToMainActivity() {
