@@ -14,13 +14,16 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.EndSemesterProject">
         <activity
+            android:name=".Controllers.ForgotPasswordActivity"
+            android:exported="false" />
+        <activity
             android:name=".Controllers.ImageViewerActivity"
             android:exported="false" />
         <activity
             android:name=".Controllers.ChatActivity"
             android:exported="false"
             android:parentActivityName=".Controllers.MainActivity" />
-        <activity android:name=".Controllers.MainActivity"></activity>
+        <activity android:name=".Controllers.MainActivity" />
         <activity
             android:name=".Controllers.LoginActivity"
             android:exported="true">

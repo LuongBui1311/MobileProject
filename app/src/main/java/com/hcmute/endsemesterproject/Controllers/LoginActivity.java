@@ -63,6 +63,18 @@ public class LoginActivity extends AppCompatActivity {
         handleLoginBtn();
         handlePhoneLogin();
         handleGoogleLogin();
+        handleForgotPassword();
+    }
+
+    private void handleForgotPassword() {
+        ForgetPasswordLink.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(LoginActivity.this, ForgotPasswordActivity.class);
+                startActivity(intent);
+                finish();
+            }
+        });
     }
 
     @Override
