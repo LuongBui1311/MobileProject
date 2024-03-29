@@ -45,6 +45,14 @@
             android:backgroundTint="@android:color/white"
             android:src="@drawable/sendfile" />
 
+        <ImageButton
+            android:id="@+id/camera_btn"
+            android:layout_width="55dp"
+            android:layout_height="50dp"
+            android:scaleType="fitXY"
+            android:backgroundTint="@android:color/white"
+            android:layout_toEndOf="@+id/send_files_btn"
+            android:src="@drawable/camera"/>
 
         <EditText
             android:id="@+id/input_message"
@@ -53,9 +61,10 @@
             android:hint="type message here..."
             android:padding="15dp"
             android:maxLines="5"
-            android:layout_toEndOf="@+id/send_files_btn"
+            android:layout_toEndOf="@+id/camera_btn"
             android:layout_toStartOf="@+id/send_message_btn"
             />
+
 
 
         <ImageButton

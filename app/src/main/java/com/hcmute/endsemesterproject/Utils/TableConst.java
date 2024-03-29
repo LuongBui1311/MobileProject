@@ -11,6 +11,7 @@ public class TableConst {
         public static final String STATUS = "status";
 
         public class USER_STATE{
+            public static final String TABLE_NAME = "userState";
             public static final String DATE = "date";
             public static final String STATE = "state";
             public static final String TIME = "time";
