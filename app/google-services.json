@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "347117574370",
+    "firebase_url": "https://android-chat-app-b6cae-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "android-chat-app-b6cae",
+    "storage_bucket": "android-chat-app-b6cae.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:347117574370:android:386572feac860ee3f8a6bb",
+        "android_client_info": {
+          "package_name": "com.hcmute.endsemesterproject"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "347117574370-t8huotjevtfsecnkr7m0oephu1flq1n1.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.hcmute.endsemesterproject",
+            "certificate_hash": "46339ada7e7e5d89609e2176bb70cfdfa00d7042"
+          }
+        },
+        {
+          "client_id": "347117574370-8fsbb7l20cmdk226ms491fcqv5ijugnt.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAnQSTF4dS56hsx1rRImZHHpKlkmH14mPk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "347117574370-8fsbb7l20cmdk226ms491fcqv5ijugnt.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
