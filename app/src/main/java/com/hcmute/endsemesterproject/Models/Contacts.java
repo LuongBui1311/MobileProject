@@ -1,7 +1,8 @@
 package com.hcmute.endsemesterproject.Models;
 
 public class Contacts {
-    public String name, status, image;
+    private String name, status, image;
+    private String id;
     public Contacts()
     {
 
@@ -36,4 +37,7 @@ public class Contacts {
     public void setImage(String image) {
         this.image = image;
     }
+
+    public void setId(String id) { this.id = id; }
+    public String getId() { return this.id; }
 }
