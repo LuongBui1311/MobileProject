@@ -1,5 +1,6 @@
 package com.hcmute.endsemesterproject.Adapters;
 
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
@@ -8,8 +9,10 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.MediaController;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.VideoView;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
@@ -25,6 +28,7 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.hcmute.endsemesterproject.Controllers.ImageViewerActivity;
 import com.hcmute.endsemesterproject.Controllers.MainActivity;
+import com.hcmute.endsemesterproject.Controllers.VideoViewerActivity;
 import com.hcmute.endsemesterproject.Models.Messages;
 import com.hcmute.endsemesterproject.R;
 import com.squareup.picasso.Picasso;
@@ -54,6 +58,7 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MessageV
         public TextView senderMessageText, receiverMessageText;
         public CircleImageView receiverProfileImage;
         public ImageView messageSenderPicture, messageReceiverPicture;
+        public VideoView messageSenderVideo, messageReceiverVideo;
 
 
         public MessageViewHolder(@NonNull View itemView)
@@ -65,6 +70,8 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MessageV
             receiverProfileImage = (CircleImageView) itemView.findViewById(R.id.message_profile_image);
             messageReceiverPicture = itemView.findViewById(R.id.message_receiver_image_view);
             messageSenderPicture = itemView.findViewById(R.id.message_sender_image_view);
+            messageSenderVideo = itemView.findViewById(R.id.message_sender_video_view);
+            messageReceiverVideo = itemView.findViewById(R.id.message_receiver_video_view);
         }
     }
 
@@ -123,52 +130,41 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MessageV
         messageViewHolder.senderMessageText.setVisibility(View.GONE);
         messageViewHolder.messageSenderPicture.setVisibility(View.GONE);
         messageViewHolder.messageReceiverPicture.setVisibility(View.GONE);
+        messageViewHolder.messageSenderVideo.setVisibility(View.GONE);
+        messageViewHolder.messageReceiverVideo.setVisibility(View.GONE);
 
 
         if (fromMessageType.equals("text"))
         {
             if (fromUserID.equals(messageSenderId))
             {
-                messageViewHolder.senderMessageText.setVisibility(View.VISIBLE);
-
-                messageViewHolder.senderMessageText.setBackgroundResource(R.drawable.sender_messages_layout);
-                messageViewHolder.senderMessageText.setTextColor(Color.BLACK);
-                messageViewHolder.senderMessageText.setText(messages.getMessage() + "\n \n" + messages.getTime() + " - " + messages.getDate());
+                displayText(messageViewHolder.senderMessageText, R.drawable.sender_messages_layout, messages);
             }
             else
             {
                 messageViewHolder.receiverProfileImage.setVisibility(View.VISIBLE);
-                messageViewHolder.receiverMessageText.setVisibility(View.VISIBLE);
-
-                messageViewHolder.receiverMessageText.setBackgroundResource(R.drawable.receiver_messages_layout);
-                messageViewHolder.receiverMessageText.setTextColor(Color.BLACK);
-                messageViewHolder.receiverMessageText.setText(messages.getMessage() + "\n \n" + messages.getTime() + " - " + messages.getDate());
+                displayText(messageViewHolder.receiverMessageText, R.drawable.receiver_messages_layout, messages);
             }
         }else if (fromMessageType.equals("image")){
             if (fromUserID.equals(messageSenderId)){
-                messageViewHolder.messageSenderPicture.setVisibility(View.VISIBLE);
-
-                Picasso.get().load(messages.getMessage()).into(messageViewHolder.messageSenderPicture);
+                displayImage(messageViewHolder.messageSenderPicture, messages);
             } else {
                 messageViewHolder.receiverProfileImage.setVisibility(View.VISIBLE);
-                messageViewHolder.messageReceiverPicture.setVisibility(View.VISIBLE);
-
-                Picasso.get().load(messages.getMessage()).into(messageViewHolder.messageReceiverPicture);
+                displayImage(messageViewHolder.messageReceiverPicture, messages);
             }
         } else if (fromMessageType.equals("pdf") || (fromMessageType.equals("docx"))){
             if (fromUserID.equals(messageSenderId)) {
-                messageViewHolder.messageSenderPicture.setVisibility(View.VISIBLE);
-
-                Picasso.get()
-                        .load("https://firebasestorage.googleapis.com/v0/b/android-chat-app-b6cae.appspot.com/o/Image%20Files%2Fsendfile.jpg?alt=media&token=972f7b0c-1529-4a54-9db1-09e22b8ffbc2")
-                        .into(messageViewHolder.messageSenderPicture);
+                displayFile(messageViewHolder.messageSenderPicture);
             } else {
                 messageViewHolder.receiverProfileImage.setVisibility(View.VISIBLE);
-                messageViewHolder.messageReceiverPicture.setVisibility(View.VISIBLE);
-
-                Picasso.get()
-                        .load("https://firebasestorage.googleapis.com/v0/b/android-chat-app-b6cae.appspot.com/o/Image%20Files%2Fsendfile.jpg?alt=media&token=972f7b0c-1529-4a54-9db1-09e22b8ffbc2")
-                        .into(messageViewHolder.messageReceiverPicture);
+                displayFile(messageViewHolder.messageReceiverPicture);
+            }
+        } else if (fromMessageType.equals("video")) {
+            if (fromUserID.equals(messageSenderId)){
+                displayVideo(messageViewHolder.messageSenderVideo, messageViewHolder.itemView.getContext(), messages);
+            } else {
+                messageViewHolder.receiverProfileImage.setVisibility(View.VISIBLE);
+                displayVideo(messageViewHolder.messageReceiverVideo, messageViewHolder.itemView.getContext(), messages);
             }
         }
 
@@ -251,7 +247,38 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MessageV
                                     Intent intent = new Intent(messageViewHolder.itemView.getContext(), MainActivity.class);
                                     messageViewHolder.itemView.getContext().startActivity(intent);
                                 } else if (which == 1){
-                                    Intent intent = new Intent(messageViewHolder.itemView.getContext(), ImageViewerActivity.class);
+                                    Intent intent = new Intent(messageViewHolder.itemView.getContext(), VideoViewerActivity.class);
+                                    intent.putExtra("url", userMessagesList.get(position).getMessage());
+                                    messageViewHolder.itemView.getContext().startActivity(intent);
+                                } else if (which == 2){
+                                    deleteMessageForEveryOne(position,  messageViewHolder);
+
+                                    Intent intent = new Intent(messageViewHolder.itemView.getContext(), MainActivity.class);
+                                    messageViewHolder.itemView.getContext().startActivity(intent);
+                                }
+                            }
+                        });
+                        builder.show();
+                    } else if (userMessagesList.get(position).getType().equals("video")) {
+                        CharSequence options[] = new CharSequence[]{
+                                "Delete for me",
+                                "View This Video",
+                                "Delete for Everyone",
+                                "Cancel"
+                        };
+                        AlertDialog.Builder builder = new AlertDialog.Builder(messageViewHolder.itemView.getContext());
+                        builder.setTitle("Delete Message?");
+
+                        builder.setItems(options, new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                if (which == 0){
+                                    deleteSentMessage(position, messageViewHolder);
+
+                                    Intent intent = new Intent(messageViewHolder.itemView.getContext(), MainActivity.class);
+                                    messageViewHolder.itemView.getContext().startActivity(intent);
+                                } else if (which == 1){
+                                    Intent intent = new Intent(messageViewHolder.itemView.getContext(), VideoViewerActivity.class);
                                     intent.putExtra("url", userMessagesList.get(position).getMessage());
                                     messageViewHolder.itemView.getContext().startActivity(intent);
                                 } else if (which == 2){
@@ -339,10 +366,64 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MessageV
                             }
                         });
                         builder.show();
+                    } else if (userMessagesList.get(position).getType().equals("video")){
+                        CharSequence options[] = new CharSequence[]{
+                                "Delete for me",
+                                "View This Video",
+                                "Cancel"
+                        };
+                        AlertDialog.Builder builder = new AlertDialog.Builder(messageViewHolder.itemView.getContext());
+                        builder.setTitle("Delete Message?");
+
+                        builder.setItems(options, new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                if (which == 0){
+                                    deleteSentMessage(position, messageViewHolder);
+
+                                    Intent intent = new Intent(messageViewHolder.itemView.getContext(), MainActivity.class);
+                                    messageViewHolder.itemView.getContext().startActivity(intent);
+                                } else if (which == 1){
+                                    Intent intent = new Intent(messageViewHolder.itemView.getContext(), VideoViewerActivity.class);
+                                    intent.putExtra("url", userMessagesList.get(position).getMessage());
+                                    messageViewHolder.itemView.getContext().startActivity(intent);
+                                }
+                            }
+                        });
+                        builder.show();
                     }
                 }
             });
         }
+    }
+
+    private void displayVideo(VideoView messageVideo, Context context, Messages messages) {
+        messageVideo.setVisibility(View.VISIBLE);
+        messageVideo.setVideoURI(Uri.parse(messages.getMessage()));
+
+        MediaController mediaController = new MediaController(context);
+        messageVideo.setMediaController(mediaController);
+        mediaController.setAnchorView(messageVideo);
+    }
+
+    private void displayFile(ImageView messageFile) {
+        messageFile.setVisibility(View.VISIBLE);
+        Picasso.get()
+                .load("https://firebasestorage.googleapis.com/v0/b/android-chat-app-b6cae.appspot.com/o/Image%20Files%2Fsendfile.jpg?alt=media&token=972f7b0c-1529-4a54-9db1-09e22b8ffbc2")
+                .into(messageFile);
+    }
+
+    private void displayImage(ImageView messagePicture, Messages messages) {
+        messagePicture.setVisibility(View.VISIBLE);
+        Picasso.get().load(messages.getMessage()).into(messagePicture);
+    }
+
+    private void displayText(TextView messageText, int messagesLayout, Messages messages) {
+        messageText.setVisibility(View.VISIBLE);
+
+        messageText.setBackgroundResource(messagesLayout);
+        messageText.setTextColor(Color.BLACK);
+        messageText.setText(messages.getMessage() + "\n \n" + messages.getTime() + " - " + messages.getDate());
     }
 
     @Override

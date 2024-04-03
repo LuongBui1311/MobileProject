@@ -107,7 +107,8 @@ public class ChatActivity extends AppCompatActivity
                 CharSequence options[] = new CharSequence[] {
                         "Images",
                         "PDF Files",
-                        "MS Word Files"
+                        "MS Word Files",
+                        "Videos"
                 };
                 AlertDialog.Builder builder = new AlertDialog.Builder(ChatActivity.this);
                 builder.setTitle("Select the File");
@@ -132,6 +133,12 @@ public class ChatActivity extends AppCompatActivity
                             String title = "Select MS Word File";
                             getContent(type, title);
                         }
+                        if (which == 3){
+                            checker = "video";
+                            String type = "video/*";
+                            String title = "Select Video";
+                            getContent(type, title);
+                        }
                     }
                 });
                 builder.show();
@@ -147,8 +154,8 @@ public class ChatActivity extends AppCompatActivity
     }
     private void getContent(String type, String title) {
         Intent intent = new Intent();
-        intent.setAction(Intent.ACTION_GET_CONTENT);
         intent.setType(type);
+        intent.setAction(Intent.ACTION_GET_CONTENT);
         startActivityForResult(intent.createChooser(intent, title), SEND_FILE_CODE);
     }
     private void openCamera() {
@@ -198,11 +205,13 @@ public class ChatActivity extends AppCompatActivity
         if(requestCode == SEND_FILE_CODE && resultCode == RESULT_OK && data != null && data.getData() != null){
             displayLoadingBar();
             fileUri = data.getData();
-            if (!checker.equals("image")){
+            if (!checker.equals("image") && !checker.equals("video")){
                 sendFileMessage(StorageConst.DOCUMENT);
             } else if (checker.equals("image")) {
                 sendFileMessage(StorageConst.IMAGE);
-            } else{
+            } else if (checker.equals("video")){
+                sendFileMessage(StorageConst.VIDEO);
+            } else {
                 loadingBar.dismiss();
                 Toast.makeText(this, "Nothing Selected, Error.", Toast.LENGTH_SHORT).show();
             }

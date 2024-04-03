@@ -23,6 +23,9 @@
             android:name=".Controllers.GroupInteractionActivity"
             android:exported="false" />
         <activity
+            android:name=".Controllers.VideoViewerActivity"
+            android:exported="false" />
+        <activity
             android:name=".Controllers.BetaGroupChatActivity"
             android:exported="false" />
         <activity
