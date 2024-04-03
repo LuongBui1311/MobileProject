@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".Controllers.CreateGroupActivity"
+    android:padding="32dp"
+    android:orientation="vertical">
+    <!-- Group name -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:text="Create new group"
+        android:textStyle="bold"
+        android:textSize="32sp"/>
+    <!-- Group name -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Group name"
+        android:textStyle="bold"
+        android:textSize="18sp"/>
+
+    <!-- Group name EditText and Verify drawable -->
+    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+
+        android:orientation="horizontal"
+        android:gravity="center">
+
+        <EditText
+            android:id="@+id/editTextGroupName"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:hint="Enter group name"/>
+
+        <FrameLayout
+            android:id="@+id/frameLayoutVerify"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp">
+
+            <!-- Green tick ImageView -->
+            <ImageView
+                android:id="@+id/imageViewVerify"
+                android:layout_width="50sp"
+                android:layout_height="50sp"
+                android:src="@drawable/greentick"
+                android:visibility="visible"
+                android:contentDescription="Verify"/>
+
+            <!-- Spinner (ProgressBar) -->
+            <ProgressBar
+                android:id="@+id/progressBarVerify"
+                android:layout_width="50sp"
+                android:layout_height="50sp"
+                android:visibility="invisible"/>
+
+        </FrameLayout>
+
+
+    </LinearLayout>
+
+    <!-- Validation text -->
+    <TextView
+        android:id="@+id/textViewValidation"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Group name is invalid."
+        android:layout_marginVertical="16dp"
+        android:layout_marginTop="4dp"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Group type"
+        android:textStyle="bold"
+        android:textSize="18sp"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_gravity="center"
+        android:gravity="center">
+        <RadioGroup
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:gravity="center"
+            android:orientation="horizontal">
+            <RadioButton
+                android:layout_width="wrap_content"
+                android:id="@+id/publicRadioButton"
+                android:layout_marginRight="64dp"
+                android:layout_height="wrap_content"
+                android:text="Public"
+                android:checked="true">
+            </RadioButton>
+            <RadioButton
+                android:id="@+id/privateRadioButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Private"/>
+        </RadioGroup>
+
+
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/textViewGroupMember"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Choose group members"
+        android:textStyle="bold"
+        android:textSize="18sp"/>
+
+    <!-- List view of contacts -->
+    <ListView
+        android:id="@+id/listViewContacts"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:layout_marginTop="16dp"
+        android:divider="@null"
+        android:dividerHeight="0dp"/>
+
+    <!-- Create and Cancel buttons -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:layout_marginTop="16dp">
+
+        <Button
+            android:id="@+id/buttonCreate"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginRight="64dp"
+            android:text="Create"/>
+
+        <Button
+            android:id="@+id/buttonCancel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Cancel"
+            android:layout_marginStart="8dp"/>
+
+    </LinearLayout>
+</LinearLayout>

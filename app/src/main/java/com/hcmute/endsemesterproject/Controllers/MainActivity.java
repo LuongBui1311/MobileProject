@@ -155,39 +155,8 @@ public class MainActivity extends AppCompatActivity
 
     private void RequestNewGroup()
     {
-        AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this, R.style.AlertDialog);
-        builder.setTitle("Enter Group Name :");
-
-        final EditText groupNameField = new EditText(MainActivity.this);
-        groupNameField.setHint("e.g Coding Cafe");
-        builder.setView(groupNameField);
-
-        builder.setPositiveButton("Create", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialogInterface, int i)
-            {
-                String groupName = groupNameField.getText().toString();
-
-                if (TextUtils.isEmpty(groupName))
-                {
-                    Toast.makeText(MainActivity.this, "Please write Group Name...", Toast.LENGTH_SHORT).show();
-                }
-                else
-                {
-                    CreateNewGroup(groupName);
-                }
-            }
-        });
-
-        builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialogInterface, int i)
-            {
-                dialogInterface.cancel();
-            }
-        });
-
-        builder.show();
+        Intent createGroupIntent = new Intent(MainActivity.this, CreateGroupActivity.class);
+        startActivity(createGroupIntent);
     }
 
 

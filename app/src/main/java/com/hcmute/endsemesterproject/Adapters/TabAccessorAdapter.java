@@ -5,6 +5,7 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentPagerAdapter;
 
+import com.hcmute.endsemesterproject.Controllers.BetaGroupFragment;
 import com.hcmute.endsemesterproject.Controllers.ChatsFragment;
 import com.hcmute.endsemesterproject.Controllers.ContactsFragment;
 import com.hcmute.endsemesterproject.Controllers.GroupsFragment;
@@ -26,11 +27,6 @@ public class TabAccessorAdapter extends FragmentPagerAdapter
             case 0:
                 ChatsFragment chatsFragment = new ChatsFragment();
                 return chatsFragment;
-
-            case 1:
-                GroupsFragment groupsFragment = new GroupsFragment();
-                return groupsFragment;
-
             case 2:
                 ContactsFragment contactsFragment = new ContactsFragment();
                 return contactsFragment;
@@ -38,6 +34,9 @@ public class TabAccessorAdapter extends FragmentPagerAdapter
             case 3:
                 RequestsFragment requestsFragment = new RequestsFragment();
                 return requestsFragment;
+            case 1:
+                BetaGroupFragment betaGroupFragment = new BetaGroupFragment();
+                return betaGroupFragment;
 
             default:
                 return null;
@@ -61,15 +60,13 @@ public class TabAccessorAdapter extends FragmentPagerAdapter
             case 0:
                 return "Chats";
 
-            case 1:
-                return "Groups";
-
             case 2:
                 return "Contacts";
 
             case 3:
                 return "Requests";
-
+            case 1:
+                return "Beta groups";
             default:
                 return null;
         }
