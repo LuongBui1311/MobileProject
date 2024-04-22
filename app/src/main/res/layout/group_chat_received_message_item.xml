@@ -5,6 +5,7 @@
     android:orientation="vertical"
     android:padding="8dp">
 
+    <!-- Layout for the received message -->
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -15,6 +16,16 @@
         android:layout_marginEnd="64dp"
         android:orientation="vertical">
 
+        <!-- TextView for sender's name -->
+        <TextView
+            android:id="@+id/textViewSenderName"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Sender Name"
+            android:textColor="@android:color/black"
+            android:textSize="14sp" /> <!-- Adjust size as needed -->
+
+        <!-- TextView for message content -->
         <TextView
             android:id="@+id/textViewMessageContent"
             android:layout_width="wrap_content"
@@ -23,6 +34,7 @@
             android:textColor="@android:color/black"
             android:textSize="16sp" />
 
+        <!-- TextView for message timestamp -->
         <TextView
             android:id="@+id/textViewMessageTime"
             android:layout_width="wrap_content"
@@ -32,6 +44,34 @@
             android:textSize="12sp"
             android:layout_marginTop="4dp"/>
 
+        <!-- Updated ImageView for other file types -->
+        <ImageView
+            android:id="@+id/imageViewFileIcon"
+            android:layout_width="150dp"
+            android:layout_height="150dp"
+            android:src="@drawable/default_file_icon"
+            android:scaleType="fitCenter"
+            android:layout_marginTop="8dp"
+            android:visibility="gone"
+            android:adjustViewBounds="true" /> <!-- Maintain aspect ratio -->
+
+        <!-- New ImageView for image messages -->
+        <ImageView
+            android:id="@+id/imageViewMessageImage"
+            android:layout_width="150dp"
+            android:layout_height="150dp"
+            android:scaleType="fitCenter"
+            android:layout_marginTop="8dp"
+            android:visibility="gone"
+            android:adjustViewBounds="true" /> <!-- Maintain aspect ratio -->
+
+        <!-- Progress bar for image loading -->
+        <ProgressBar
+            android:id="@+id/progressBar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:visibility="gone" /> <!-- Initially hidden -->
     </LinearLayout>
 
 </LinearLayout>

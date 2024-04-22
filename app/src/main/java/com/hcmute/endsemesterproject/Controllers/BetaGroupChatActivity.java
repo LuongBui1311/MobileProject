@@ -1,20 +1,22 @@
 package com.hcmute.endsemesterproject.Controllers;
 
 import android.content.Intent;
+import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
+import android.provider.OpenableColumns;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ListView;
+import android.widget.ImageButton;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -26,9 +28,12 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
+import com.google.firebase.storage.UploadTask;
 import com.hcmute.endsemesterproject.Adapters.GroupMessageAdapter;
+import com.hcmute.endsemesterproject.Models.BetaGroupMessage;
 import com.hcmute.endsemesterproject.Models.Group;
-import com.hcmute.endsemesterproject.Models.GroupMessage;
 import com.hcmute.endsemesterproject.R;
 
 import java.util.ArrayList;
@@ -37,14 +42,33 @@ import java.util.List;
 public class BetaGroupChatActivity extends AppCompatActivity {
     private Group currentGroup;
     private Button sendMessageButton;
+    private ImageButton sendFileButton;
     private EditText messageInput;
     private RecyclerView messageRecyclerView;
-    private List<GroupMessage> messageList;
+    private List<BetaGroupMessage> messageList;
     private TextView groupTitle;
 
     private DatabaseReference betaGroupsRef;
     private DatabaseReference messagesRef;
     private GroupMessageAdapter messageAdapter;
+
+    private static final int PICK_FILE_REQUEST = 1;
+    private static final String[] SUPPORTED_MIME_TYPES = {
+            "image/jpeg",
+            "image/png",
+            "application/msword",
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "application/vnd.ms-powerpoint",
+            "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+            "application/vnd.ms-excel",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "application/pdf"
+    };
+
+    private Uri selectedFileUri;
+    private ImageView selectedFileImageView;
+    private TextView selectedFileTextView;
+    private LinearLayout selectedFilePlaceholder;
 
 
     @Override
@@ -65,18 +89,18 @@ public class BetaGroupChatActivity extends AppCompatActivity {
             }
         }
 
-        sendMessageButton = (Button) findViewById(R.id.send_message_button);
-        messageInput = (EditText) findViewById(R.id.message_input);
+        sendMessageButton = findViewById(R.id.send_message_button);
+        sendFileButton = findViewById(R.id.sendFileButton);
+        messageInput = findViewById(R.id.message_input);
         messageRecyclerView = findViewById(R.id.messages_list);
-        groupTitle = (TextView) findViewById(R.id.group_title);
+        groupTitle = findViewById(R.id.group_title);
         groupTitle.setText(currentGroup.getName());
 
         // Initialize message list
         messageList = new ArrayList<>();
 
-        String currentUserId = FirebaseAuth.getInstance().getCurrentUser().getUid();
         // Initialize message adapter
-        messageAdapter = new GroupMessageAdapter(messageList, currentUserId);
+        messageAdapter = new GroupMessageAdapter(messageList, FirebaseAuth.getInstance().getCurrentUser().getUid());
         messageRecyclerView.setAdapter(messageAdapter);
         messageRecyclerView.setLayoutManager(new LinearLayoutManager(this));
 
@@ -88,7 +112,90 @@ public class BetaGroupChatActivity extends AppCompatActivity {
             }
         });
 
+        selectedFileImageView = findViewById(R.id.selected_file_image_view);
+        selectedFileTextView = findViewById(R.id.selected_file_text_view);
+        selectedFilePlaceholder = findViewById(R.id.selected_file_placeholder);
+
+        ImageButton sendFileButton = findViewById(R.id.sendFileButton);
+        sendFileButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startFilePickerIntent();
+            }
+        });
+
+        ImageButton removeFileButton = findViewById(R.id.remove_file_button);
+        removeFileButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                clearSelectedFile();
+            }
+        });
+
         loadMessagesFromFirebase();
+    }
+
+    private void sendMessage() {
+        String messageText = messageInput.getText().toString().trim();
+
+        if (!messageText.isEmpty()) {
+            sendMessageButton.setEnabled(false);
+            sendTextMessage(messageText);
+        }
+
+        if (selectedFileUri != null) {
+            sendMessageButton.setEnabled(false);
+            sendFileMessage();
+        }
+    }
+
+    private void startFilePickerIntent() {
+        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+        intent.setType("*/*");
+        intent.putExtra(Intent.EXTRA_MIME_TYPES, SUPPORTED_MIME_TYPES);
+        startActivityForResult(intent, PICK_FILE_REQUEST);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == PICK_FILE_REQUEST && resultCode == RESULT_OK && data != null && data.getData() != null) {
+            selectedFileUri = data.getData();
+            displaySelectedFile();
+        }
+    }
+
+    private void displaySelectedFile() {
+        if (selectedFileUri != null) {
+            String fileName = getFileNameFromUri(selectedFileUri);
+            selectedFileTextView.setText(fileName);
+            selectedFilePlaceholder.setVisibility(View.VISIBLE);
+
+            String mimeType = getContentResolver().getType(selectedFileUri);
+            if (mimeType != null && (mimeType.startsWith("image/") || mimeType.startsWith("application/msword") || mimeType.startsWith("application/vnd.ms-powerpoint") || mimeType.startsWith("application/vnd.ms-excel") || mimeType.equals("application/pdf"))) {
+                selectedFileImageView.setImageURI(selectedFileUri);
+            } else {
+                selectedFileImageView.setImageResource(R.drawable.ic_file_placeholder);
+            }
+        }
+    }
+
+    private String getFileNameFromUri(Uri uri) {
+        String fileName = null;
+        Cursor cursor = getContentResolver().query(uri, null, null, null, null);
+        if (cursor != null && cursor.moveToFirst()) {
+            int displayNameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
+            fileName = cursor.getString(displayNameIndex);
+            cursor.close();
+        }
+        return fileName;
+    }
+
+    private void clearSelectedFile() {
+        selectedFileUri = null;
+        selectedFileImageView.setImageDrawable(null);
+        selectedFileTextView.setText("");
+        selectedFilePlaceholder.setVisibility(View.GONE);
     }
 
     private void loadMessagesFromFirebase() {
@@ -98,14 +205,14 @@ public class BetaGroupChatActivity extends AppCompatActivity {
                 messageList.clear(); // Clear existing messages
                 for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
                     // Deserialize GroupMessage from Firebase snapshot
-                    GroupMessage message = snapshot.getValue(GroupMessage.class);
+                    BetaGroupMessage message = snapshot.getValue(BetaGroupMessage.class);
                     if (message != null) {
                         messageList.add(message);
                     }
                 }
                 messageAdapter.notifyDataSetChanged(); // Notify adapter about data change
-                if (messageList.size() != 0) {
-                    messageRecyclerView.smoothScrollToPosition(messageList.size()-1);
+                if (!messageList.isEmpty()) {
+                    messageRecyclerView.smoothScrollToPosition(messageList.size() - 1);
                 }
             }
 
@@ -122,51 +229,158 @@ public class BetaGroupChatActivity extends AppCompatActivity {
         this.currentGroup = (Group) intent.getSerializableExtra("groupObject");
     }
 
+    private void sendTextMessage(String messageText) {
+        if (currentGroup == null || currentGroup.getName() == null) {
+            Log.e("BetaGroupChatActivity", "Invalid group information");
+            return;
+        }
 
-    private void sendMessage() {
-        String messageText = messageInput.getText().toString().trim();
+        String messageId = messagesRef.push().getKey();
+        String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        long timestamp = System.currentTimeMillis();
 
-        if (!messageText.isEmpty()) {
-            // Check if the currentGroup is null or invalid
-            if (currentGroup == null || currentGroup.getName() == null) {
-                Log.e("BetaGroupChatActivity", "Invalid group information");
-                return;
+        // Fetch sender's name from Firebase Realtime Database
+        DatabaseReference usersRef = FirebaseDatabase.getInstance().getReference().child("Users").child(userId);
+        usersRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                if (dataSnapshot.exists()) {
+                    String senderName = dataSnapshot.child("name").getValue(String.class);
+
+                    // Create and send the message
+                    BetaGroupMessage message = new BetaGroupMessage(messageId,
+                            userId,
+                            senderName,
+                            timestamp,
+                            messageText,
+                            "text",
+                            "", // Pass an empty string for fileUrl
+                            "");
+
+                    messagesRef.child(messageId).setValue(message)
+                            .addOnSuccessListener(new OnSuccessListener<Void>() {
+                                @Override
+                                public void onSuccess(Void aVoid) {
+                                    Log.d("BetaGroupChatActivity", "Text message sent successfully");
+                                    messageInput.setText("");
+                                    sendMessageButton.setEnabled(true);
+                                }
+                            })
+                            .addOnFailureListener(new OnFailureListener() {
+                                @Override
+                                public void onFailure(@NonNull Exception e) {
+                                    Log.e("BetaGroupChatActivity", "Failed to send text message: " + e.getMessage());
+                                    sendMessageButton.setEnabled(true);
+                                }
+                            });
+                }
             }
 
-            // Generate a unique message ID
-            String messageId = messagesRef.push().getKey();
-
-            // Get current user ID
-            String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
-
-            // Get current timestamp
-            long timestamp = System.currentTimeMillis();
-
-            // Create the message object
-            GroupMessage message = new GroupMessage(messageId, userId, messageText, timestamp);
-
-            // Save the message to the database
-            messagesRef.child(messageId).setValue(message)
-                    .addOnSuccessListener(new OnSuccessListener<Void>() {
-                        @Override
-                        public void onSuccess(Void aVoid) {
-                            // Message sent successfully
-                            Log.d("BetaGroupChatActivity", "Message sent successfully");
-                            messageInput.setText(""); // Clear the input field after sending
-                        }
-                    })
-                    .addOnFailureListener(new OnFailureListener() {
-                        @Override
-                        public void onFailure(@NonNull Exception e) {
-                            // Failed to send message
-                            Log.e("BetaGroupChatActivity", "Failed to send message: " + e.getMessage());
-                            // Handle failure
-                        }
-                    });
-        } else {
-            // Handle case where message text is empty
-            Log.e("BetaGroupChatActivity", "Message text is empty");
-        }
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+                Log.e("BetaGroupChatActivity", "Failed to fetch user data: " + databaseError.getMessage());
+                sendMessageButton.setEnabled(true);
+            }
+        });
     }
 
+    private void sendFileMessage() {
+        String storageName = "beta-group-files/" + currentGroup.getName() + "/" + selectedFileUri.getLastPathSegment();
+        StorageReference storageReference = FirebaseStorage.getInstance().getReference().child(storageName);
+
+        String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        String messageId = messagesRef.push().getKey();
+        long timestamp = System.currentTimeMillis();
+        sendMessageButton.setEnabled(false);
+
+        // Firebase Database reference to "Users" table
+        DatabaseReference usersRef = FirebaseDatabase.getInstance().getReference().child("Users").child(userId);
+
+        // Query the "Users" table to fetch the sender's name
+        usersRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                if (dataSnapshot.exists()) {
+                    String senderName = dataSnapshot.child("name").getValue(String.class);
+
+                    // Perform file upload to Firebase Storage
+                    storageReference.putFile(selectedFileUri)
+                            .addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+                                @Override
+                                public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                                    sendMessageButton.setEnabled(false);
+
+                                    storageReference.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+                                        @Override
+                                        public void onSuccess(Uri downloadUri) {
+                                            // Create the message object for file message
+                                            BetaGroupMessage message = new BetaGroupMessage(messageId,
+                                                    userId,
+                                                    senderName, // Use the fetched sender's name
+                                                    timestamp,
+                                                    null,
+                                                    getFileType(selectedFileUri),
+                                                    downloadUri.toString(),
+                                                    getFileNameFromUri(selectedFileUri));
+
+                                            // Save the message to the Firebase Database
+                                            messagesRef.child(messageId).setValue(message)
+                                                    .addOnSuccessListener(new OnSuccessListener<Void>() {
+                                                        @Override
+                                                        public void onSuccess(Void aVoid) {
+                                                            Log.d("BetaGroupChatActivity", "File message sent successfully");
+                                                            clearSelectedFile();
+                                                            sendMessageButton.setEnabled(true);
+                                                        }
+                                                    })
+                                                    .addOnFailureListener(new OnFailureListener() {
+                                                        @Override
+                                                        public void onFailure(@NonNull Exception e) {
+                                                            Log.e("BetaGroupChatActivity", "Failed to send file message: " + e.getMessage());
+                                                            sendMessageButton.setEnabled(true);
+                                                        }
+                                                    });
+                                        }
+                                    });
+                                }
+                            })
+                            .addOnFailureListener(new OnFailureListener() {
+                                @Override
+                                public void onFailure(@NonNull Exception e) {
+                                    Log.e("BetaGroupChatActivity", "Failed to upload file: " + e.getMessage());
+                                    sendMessageButton.setEnabled(true);
+                                }
+                            });
+                } else {
+                    Log.e("BetaGroupChatActivity", "User data does not exist for ID: " + userId);
+                    sendMessageButton.setEnabled(true);
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+                Log.e("BetaGroupChatActivity", "Failed to fetch user data: " + databaseError.getMessage());
+                sendMessageButton.setEnabled(true);
+            }
+        });
+    }
+
+
+    private String getFileType(Uri fileUri) {
+        String mimeType = getContentResolver().getType(fileUri);
+        if (mimeType != null) {
+            if (mimeType.startsWith("image/")) {
+                return "image";
+            } else if (mimeType.equals("application/pdf")) {
+                return "pdf";
+            } else if (mimeType.startsWith("application/msword") || mimeType.startsWith("application/vnd.openxmlformats-officedocument.wordprocessingml.document")) {
+                return "doc";
+            } else if (mimeType.startsWith("application/vnd.ms-powerpoint") || mimeType.startsWith("application/vnd.openxmlformats-officedocument.presentationml.presentation")) {
+                return "ppt";
+            } else if (mimeType.startsWith("application/vnd.ms-excel") || mimeType.startsWith("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")) {
+                return "xls";
+            }
+        }
+        return "other";
+    }
 }
