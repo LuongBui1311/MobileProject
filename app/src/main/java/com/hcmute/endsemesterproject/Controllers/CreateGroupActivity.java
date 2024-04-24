@@ -55,7 +55,7 @@ public class CreateGroupActivity extends AppCompatActivity {
     private List<Contacts> contactsList;
     private ContactAdapter contactAdapter;
     private RadioButton publicRadioButton;
-
+    private EditText editTextGroupDescription;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -74,6 +74,7 @@ public class CreateGroupActivity extends AppCompatActivity {
         buttonCreate.setEnabled(false);
         buttonCancel = findViewById(R.id.buttonCancel);
         publicRadioButton = findViewById(R.id.publicRadioButton);
+        editTextGroupDescription = findViewById(R.id.editTextGroupDescription);
 
         contactIdList = new ArrayList<String>();
         contactsList = new ArrayList<Contacts>();
@@ -158,17 +159,26 @@ public class CreateGroupActivity extends AppCompatActivity {
 
     private void createGroup() {
         String groupName = editTextGroupName.getText().toString();
+        String groupDescription = editTextGroupDescription.getText().toString();
+        String ownerId = FirebaseAuth.getInstance().getCurrentUser().getUid();
         String groupType = publicRadioButton.isChecked() ? "public" : "private";
         List<Contacts> contactsList1= contactAdapter.getSelectedContacts();
         List<String> userIdList = new ArrayList<>();
-        userIdList.add(mAuth.getCurrentUser().getUid());
+        userIdList.add(ownerId); // Add owner's ID to the member list
         for (Contacts contacts : contactsList1) {
             userIdList.add(contacts.getId());
         }
-        // do the firebase stuff here
+
+        // Firebase reference to the groups category (public or private)
         DatabaseReference groupsCategoryRef = FirebaseDatabase.getInstance().getReference().child("beta-groups").child(groupType);
         DatabaseReference groupRef = groupsCategoryRef.child(groupName);
-        groupRef.child("messages");
+
+        // Set group details (name, description, ownerId)
+        groupRef.child("name").setValue(groupName);
+        groupRef.child("description").setValue(groupDescription);
+        groupRef.child("ownerId").setValue(ownerId);
+
+        // Set group members
         groupRef.child("members").setValue(userIdList)
                 .addOnSuccessListener(new OnSuccessListener<Void>() {
                     @Override
@@ -185,8 +195,10 @@ public class CreateGroupActivity extends AppCompatActivity {
                         Toast.makeText(CreateGroupActivity.this, "Failed to create group: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                     }
                 });
+
         buttonCreate.setEnabled(false);
     }
+
 
     private void loadContactInformations() {
         FirebaseUser currentUser = mAuth.getCurrentUser();
