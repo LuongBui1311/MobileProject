@@ -48,6 +48,8 @@ public class BetaGroupChatActivity extends AppCompatActivity {
     private List<BetaGroupMessage> messageList;
     private TextView groupTitle;
 
+    private LinearLayout chatPromtLayout;
+
     private DatabaseReference betaGroupsRef;
     private DatabaseReference messagesRef;
     private GroupMessageAdapter messageAdapter;
@@ -69,6 +71,9 @@ public class BetaGroupChatActivity extends AppCompatActivity {
     private ImageView selectedFileImageView;
     private TextView selectedFileTextView;
     private LinearLayout selectedFilePlaceholder;
+    private ImageButton dotsButton;
+    private TextView chatPromptTextView;
+    private Button joinGroupButton;
 
 
     @Override
@@ -80,21 +85,36 @@ public class BetaGroupChatActivity extends AppCompatActivity {
 
         loadGroupInfo();
 
+        sendMessageButton = findViewById(R.id.send_message_button);
+        sendFileButton = findViewById(R.id.sendFileButton);
+        messageInput = findViewById(R.id.message_input);
+        chatPromptTextView = findViewById(R.id.chat_prompt);
+        joinGroupButton = findViewById(R.id.join_group_button);
+        messageRecyclerView = findViewById(R.id.messages_list);
+        groupTitle = findViewById(R.id.group_title);
+        groupTitle.setText(currentGroup.getName());
+        chatPromtLayout = findViewById(R.id.chat_prompt_layout);
+        dotsButton = findViewById(R.id.dots_button);
+
+        sendFileButton.setEnabled(false);
+        sendMessageButton.setEnabled(false);
+        messageInput.setEnabled(false);
+
         // Determine the messages reference based on the group's privacy status
         if (currentGroup != null) {
             if (currentGroup.isPublic()) {
                 messagesRef = betaGroupsRef.child("public").child(currentGroup.getName()).child("messages");
+                // check if this user is member of current group, if so hide the chat promt layout
+                checkMembership();
+
             } else {
+                chatPromtLayout.setVisibility(View.GONE);
                 messagesRef = betaGroupsRef.child("private").child(currentGroup.getName()).child("messages");
             }
         }
 
-        sendMessageButton = findViewById(R.id.send_message_button);
-        sendFileButton = findViewById(R.id.sendFileButton);
-        messageInput = findViewById(R.id.message_input);
-        messageRecyclerView = findViewById(R.id.messages_list);
-        groupTitle = findViewById(R.id.group_title);
-        groupTitle.setText(currentGroup.getName());
+
+
 
         // Initialize message list
         messageList = new ArrayList<>();
@@ -104,6 +124,14 @@ public class BetaGroupChatActivity extends AppCompatActivity {
         messageRecyclerView.setAdapter(messageAdapter);
         messageRecyclerView.setLayoutManager(new LinearLayoutManager(this));
 
+        dotsButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // Start GroupInteractionActivity
+                Intent intent = new Intent(BetaGroupChatActivity.this, GroupInteractionActivity.class);
+                startActivity(intent);
+            }
+        });
 
         sendMessageButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -134,6 +162,70 @@ public class BetaGroupChatActivity extends AppCompatActivity {
 
         loadMessagesFromFirebase();
     }
+
+    private void checkMembership() {
+        DatabaseReference groupRef = FirebaseDatabase.getInstance().getReference().child("beta-groups").child("public").child(currentGroup.getName()).child("members");
+
+        // Add a ValueEventListener to the groupRef
+        groupRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                boolean isMember = false;
+
+                // Iterate through the children of the members node
+                for (DataSnapshot childSnapshot : dataSnapshot.getChildren()) {
+                    // Check if the child value (user ID) matches the current user's ID
+                    if (childSnapshot.getValue(String.class).equals(FirebaseAuth.getInstance().getCurrentUser().getUid())) {
+                        // User is a member of the group
+                        isMember = true;
+                        break; // Exit the loop since we found a match
+                    }
+                }
+
+                // Update UI based on membership status
+                if (isMember) {
+                    // User is a member of the group
+                    chatPromptTextView.setText("You are a member of this group.");
+                    joinGroupButton.setText("Leave Group");
+                    joinGroupButton.setBackgroundColor(getResources().getColor(R.color.red));
+                    joinGroupButton.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            // Implement leave group functionality
+                            // For example:
+                            // leaveGroup();
+                        }
+                    });
+
+                    sendFileButton.setEnabled(true);
+                    sendMessageButton.setEnabled(true);
+                    messageInput.setEnabled(true);
+                } else {
+                    // User is not a member of the group
+                    chatPromptTextView.setText("To chat, please join this group.");
+                    joinGroupButton.setText("Join Group");
+                    joinGroupButton.setBackgroundColor(getResources().getColor(R.color.blue));
+                    joinGroupButton.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            // Implement join group functionality
+                            // For example:
+                            // joinGroup();
+                        }
+                    });
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+                // Handle any errors
+                Log.e("BetaGroupChatActivity", "Failed to check membership: " + databaseError.getMessage());
+            }
+        });
+    }
+
+
+
 
     private void sendMessage() {
         String messageText = messageInput.getText().toString().trim();

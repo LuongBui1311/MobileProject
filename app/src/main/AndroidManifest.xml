@@ -14,6 +14,9 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.EndSemesterProject">
         <activity
+            android:name=".Controllers.GroupInteractionActivity"
+            android:exported="false" />
+        <activity
             android:name=".Controllers.BetaGroupChatActivity"
             android:exported="false" />
         <activity
@@ -50,7 +53,6 @@
             android:parentActivityName=".Controllers.MainActivity" />
         <activity android:name=".Controllers.ProfileActivity" />
         <activity android:name=".Controllers.CreateGroupActivity" />
-
     </application>
 
 </manifest>

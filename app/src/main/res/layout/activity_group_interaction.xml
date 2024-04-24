@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp"
+    tools:context=".Controllers.GroupInteractionActivity">
+
+    <!-- Group Name -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="16dp">
+
+        <TextView
+            android:id="@+id/group_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Group Name"
+            android:textSize="24sp"
+            android:textStyle="bold"/>
+
+        <!-- Edit Name Button (visible to group owner) -->
+        <ImageButton
+            android:id="@+id/edit_name_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/ic_edit"
+            android:padding="8dp"
+            android:background="?android:attr/selectableItemBackground"
+            android:visibility="visible"/>
+    </LinearLayout>
+
+    <!-- Group Description -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="32dp">
+
+        <TextView
+            android:id="@+id/group_description"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Group Description long long long group description long long long long long hell world lorem ispum okjhj dapple orange hello good bye hehe."
+            android:textSize="18sp"/>
+
+        <ImageButton
+            android:id="@+id/edit_description_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/ic_edit"
+            android:padding="8dp"
+            android:background="?android:attr/selectableItemBackground"
+            android:visibility="visible"/>
+    </LinearLayout>
+
+    <!-- Options Buttons -->
+    <LinearLayout
+        android:id="@+id/options_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:id="@+id/view_members_button"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <!-- Icon for View Members Button -->
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/ic_view_members"
+                android:paddingRight="8dp"/>
+
+            <!-- Text for View Members Button -->
+            <Button
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="View Members"
+                android:textColor="@color/black"
+                android:background="?android:attr/selectableItemBackground"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/add_members_button"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <!-- Icon for Add Members Button -->
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/ic_add_members"
+                android:paddingRight="8dp"/>
+
+            <!-- Text for Add Members Button -->
+            <Button
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Add Members"
+                android:textColor="@color/black"
+                android:background="?android:attr/selectableItemBackground"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/other_options_button"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <!-- Icon for Other Options Button -->
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/ic_other_options"
+                android:paddingRight="8dp"/>
+
+            <!-- Text for Other Options Button -->
+            <Button
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Other Options"
+                android:textColor="@color/black"
+                android:background="?android:attr/selectableItemBackground"/>
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- Spacer to push buttons to the bottom -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"/>
+
+    <Button
+        android:id="@+id/leave_group_button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="Leave Group"
+        android:textColor="@android:color/holo_red_light"
+        android:drawableLeft="@drawable/ic_leave_group"
+        android:drawablePadding="8dp"
+        android:background="?android:attr/selectableItemBackground"/>
+
+</LinearLayout>
