@@ -1,5 +1,7 @@
 package com.hcmute.endsemesterproject.Controllers;
 
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 
@@ -12,6 +14,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ListView;
+import android.widget.Toast;
 
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.tasks.TaskCompletionSource;
@@ -57,6 +60,13 @@ public class BetaGroupFragment extends Fragment {
         groupAdapter = new GroupAdapter(requireContext(), allGroups);
         groupsListView.setAdapter(groupAdapter);
 
+        groupAdapter.setLeaveGroupCallback(new GroupAdapter.LeaveGroupCallback() {
+            @Override
+            public void onLeaveGroup(Group group) {
+                leaveGroup(group);
+            }
+        });
+
         groupsListView.setItemsCanFocus(false);
 
 
@@ -75,136 +85,150 @@ public class BetaGroupFragment extends Fragment {
         return betaGroupFragmentView;
     }
 
-    private void retrieveGroups() {
-        // Create tasks for retrieving private and public groups
-        Task<List<Group>> privateGroupsTask = retrievePrivateGroupsFromDatabase();
-        Task<List<Group>> publicGroupsTask = retrievePublicGroupsFromDatabase();
+    private void leaveGroup(Group group) {
+        // Build the confirmation dialog
+        AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
+        builder.setTitle("Leave Group");
+        builder.setMessage("Are you sure you want to leave this group?");
 
-        // Combine both tasks into a single task
-        Task<List<Group>> combinedTask = Tasks.whenAllSuccess(privateGroupsTask, publicGroupsTask);
+        // Add "Yes" button to confirm leaving the group
+        builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                // Proceed with leaving the group
+                String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+                DatabaseReference groupMembersRef = FirebaseDatabase.getInstance().getReference()
+                        .child("beta-groups")
+                        .child("private")
+                        .child(group.getName())
+                        .child("members");
+                removeCurrentUserFromGroup(groupMembersRef, userId);
+            }
+        });
 
-        // Add an onCompleteListener to the combined task
-        combinedTask.addOnCompleteListener(task -> {
-            if (task.isSuccessful()) {
-                List<Group> privateGroups = privateGroupsTask.getResult();
-                List<Group> publicGroups = publicGroupsTask.getResult();
+        // Add "No" button to cancel leaving the group
+        builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                // Dismiss the dialog
+                dialog.dismiss();
+            }
+        });
 
-                // Combine the lists of private and public groups
-                allGroups.addAll(privateGroups); // Add private groups first
-                allGroups.addAll(publicGroups); // Add public groups
+        // Show the dialog
+        AlertDialog alertDialog = builder.create();
+        alertDialog.show();
+    }
 
-                // Now you have the combined list of groups with private groups on top and public at the bottom
-                // You can proceed to display the list
 
-                // TODO: Display the list of groups in the ListView
-                displayGroups(allGroups);
-            } else {
-                // Handle task failure
-                Exception exception = task.getException();
-                if (exception != null) {
-                    Log.e("BetaGroupFragment", "Error retrieving groups: " + exception.getMessage());
+    private void removeCurrentUserFromGroup(DatabaseReference groupMembersRef, String userId) {
+        // Find the key corresponding to the user ID in the group's members list
+        groupMembersRef.orderByValue().equalTo(userId).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                    // Get the key of the user ID in the group's members list
+                    String key = snapshot.getKey();
+
+                    // Remove the member using the key
+                    groupMembersRef.child(key).removeValue()
+                            .addOnCompleteListener(task -> {
+                                if (task.isSuccessful()) {
+                                    // Optionally, you can refresh the group list after leaving
+                                    retrieveGroups();
+                                    Toast.makeText(requireContext(), "You have left the group.", Toast.LENGTH_SHORT).show();
+                                } else {
+                                    // Handle leaving group failure
+                                    Log.e("BetaGroupFragment", "Error leaving group: " + task.getException().getMessage());
+                                    Toast.makeText(requireContext(), "Failed to leave the group. Please try again.", Toast.LENGTH_SHORT).show();
+                                }
+                            });
                 }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+                // Handle onCancelled
             }
         });
     }
 
-    private void displayGroups(List<Group> allGroups) {
-        // Update the data in the adapter
-        groupAdapter.notifyDataSetChanged(); // Notify the adapter that the dataset has changed
-    }
-
-
-
-
-    public Task<List<Group>> retrievePrivateGroupsFromDatabase() {
-        // Create a new task to retrieve private groups from the database
-        TaskCompletionSource<List<Group>> taskCompletionSource = new TaskCompletionSource<>();
+    private void retrieveGroups() {
+        allGroups.clear();
 
         // Get the current user's ID
         String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
 
-        // Reference to the "private" node under "beta-groups"
-        DatabaseReference privateGroupsRef = betaGroupsRef.child("private");
+        // Reference to the "beta-groups" node
+        DatabaseReference groupsRef = FirebaseDatabase.getInstance().getReference().child("beta-groups");
 
-        // Add a listener for retrieving private groups
-        privateGroupsRef.addListenerForSingleValueEvent(new ValueEventListener() {
+        // Add a listener for retrieving all groups
+        groupsRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                List<Group> privateGroups = new ArrayList<>();
-                for (DataSnapshot groupSnapshot : dataSnapshot.getChildren()) {
-                    boolean joined = false;
-                    // Check if the user is a member of the group
-                    for (DataSnapshot child : groupSnapshot.child("members").getChildren()) {
-                        // Print the key (node name) of the child
-                        System.out.println("Key: " + child.getKey());
-                        System.out.println("Value: " + child.getValue());
-                        if (userId.equals(child.getValue())) {
-                            joined = true;
-                            break;
+                for (DataSnapshot groupTypeSnapshot : dataSnapshot.getChildren()) {
+                    String groupType = groupTypeSnapshot.getKey(); // "private" or "public"
+                    for (DataSnapshot groupSnapshot : groupTypeSnapshot.getChildren()) {
+                        String groupName = groupSnapshot.getKey(); // Group name
+                        boolean isPublic = groupType.equals("public");
+
+                        // Check if the user is a member of the group
+                        boolean isMember = false;
+                        for (DataSnapshot memberSnapshot : groupSnapshot.child("members").getChildren()) {
+                            if (memberSnapshot.getValue(String.class).equals(userId)) {
+                                isMember = true;
+                                break;
+                            }
+                        }
+
+                        if (isMember) {
+                            // Construct Group object using the group name, public/private status, and number of members
+                            Group group = new Group();
+                            group.setName(groupName);
+                            group.setPublic(isPublic);
+                            group.setNumberOfMembers(groupSnapshot.child("members").getChildrenCount()); // Get the count of members
+                            group.setDescription("This is default group description.");
+                            allGroups.add(group);
                         }
                     }
-                    if (joined) {
-                        String groupName = groupSnapshot.getKey();
-                        Group group = new Group();
-                        group.setName(groupName);
-                        group.setPublic(false);
-                        group.setDescription("This is default description.");
-                        group.setNumberOfMembers(groupSnapshot.child("members").getChildrenCount());
-                        privateGroups.add(group);
-                    }
                 }
-                // Set the result of the task
-                taskCompletionSource.setResult(privateGroups);
+
+
+                // Filter the groups list to get private then public groups
+                List<Group> privateGroups = filterGroups(allGroups, false);
+                List<Group> publicGroups = filterGroups(allGroups, true);
+
+                // Combine the lists of private and public groups
+                allGroups.clear(); // Clear the list before adding filtered groups
+                allGroups.addAll(privateGroups); // Add private groups first
+                allGroups.addAll(publicGroups); // Add public groups
+
+                // TODO: Display the list of groups in the ListView
+                displayGroups(allGroups);
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError databaseError) {
-                // Set an exception for the task
-                taskCompletionSource.setException(databaseError.toException());
+                // Handle onCancelled
             }
         });
-
-        // Return the task associated with this listener
-        return taskCompletionSource.getTask();
     }
 
-    private Task<List<Group>> retrievePublicGroupsFromDatabase() {
-        // Create a new task to retrieve public groups from the database
-        TaskCompletionSource<List<Group>> taskCompletionSource = new TaskCompletionSource<>();
-
-        // Reference to the "public" node under "beta-groups"
-        DatabaseReference publicGroupsRef = betaGroupsRef.child("public");
-
-        // Add a listener for retrieving public groups
-        publicGroupsRef.addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                List<Group> publicGroups = new ArrayList<>();
-                for (DataSnapshot groupSnapshot : dataSnapshot.getChildren()) {
-                    // Retrieve the group name
-                    String groupName = groupSnapshot.getKey();
-                    Group group = new Group();
-                    group.setName(groupName);
-                    group.setPublic(true);
-                    group.setDescription("This is default description.");
-                    group.setNumberOfMembers(groupSnapshot.child("members").getChildrenCount());
-
-                    // Add the group to the list of public groups
-                    publicGroups.add(group);
-                }
-                // Set the result of the task
-                taskCompletionSource.setResult(publicGroups);
+    private List<Group> filterGroups(List<Group> groups, boolean isPublic) {
+        List<Group> filteredGroups = new ArrayList<>();
+        for (Group group : groups) {
+            if (group.isPublic() == isPublic) {
+                filteredGroups.add(group);
             }
+        }
+        return filteredGroups;
+    }
 
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-                // Set an exception for the task
-                taskCompletionSource.setException(databaseError.toException());
-            }
-        });
 
-        // Return the task associated with this listener
-        return taskCompletionSource.getTask();
+
+    private void displayGroups(List<Group> allGroups) {
+        // Update the data in the adapter
+        groupAdapter.notifyDataSetChanged(); // Notify the adapter that the dataset has changed
     }
 
 }

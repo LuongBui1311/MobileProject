@@ -12,6 +12,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.hcmute.endsemesterproject.Controllers.BetaGroupFragment;
 import com.hcmute.endsemesterproject.Models.Group;
 import com.hcmute.endsemesterproject.R;
 
@@ -20,6 +21,16 @@ import java.util.List;
 public class GroupAdapter extends ArrayAdapter<Group> {
     private Context context;
     private List<Group> groups;
+
+    public interface LeaveGroupCallback {
+        void onLeaveGroup(Group group);
+    }
+
+    private  LeaveGroupCallback callback;
+
+    public void setLeaveGroupCallback(LeaveGroupCallback callback) {
+        this.callback = callback;
+    }
 
     public GroupAdapter(Context context, List<Group> groups) {
         super(context, 0, groups);
@@ -49,10 +60,22 @@ public class GroupAdapter extends ArrayAdapter<Group> {
                 viewHolder.tvGroupName = convertView.findViewById(R.id.tvPrivateGroupName);
                 viewHolder.tvGroupDescription = convertView.findViewById(R.id.tvPrivateGroupDescription);
                 viewHolder.tvNumberOfMembers = convertView.findViewById(R.id.tvPrivateNumberOfMembers);
+
+                viewHolder.leaveGroupButton = convertView.findViewById(R.id.btnLeaveGroup);
+
+                viewHolder.leaveGroupButton.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        if (callback != null) {
+                            callback.onLeaveGroup(group);
+                        }
+                    }
+                });
             } else {
                 viewHolder.tvGroupName = convertView.findViewById(R.id.tvGroupName);
                 viewHolder.tvGroupDescription = convertView.findViewById(R.id.tvGroupDescription);
                 viewHolder.tvNumberOfMembers = convertView.findViewById(R.id.tvNumberOfMembers);
+
             }
 
             convertView.setTag(viewHolder);
@@ -73,5 +96,6 @@ public class GroupAdapter extends ArrayAdapter<Group> {
         TextView tvGroupName;
         TextView tvGroupDescription;
         TextView tvNumberOfMembers;
+        Button leaveGroupButton;
     }
 }
