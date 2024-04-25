@@ -5,6 +5,7 @@ import java.io.Serializable;
 public class Group implements Serializable {
     private String name;
     private String description;
+    private String ownerId;
     private long numberOfMembers;
     private boolean isPublic;
 
@@ -12,11 +13,12 @@ public class Group implements Serializable {
 
     }
 
-    public Group(String name, String description, int numberOfMembers, boolean isPublic) {
+    public Group(String name, String description, int numberOfMembers, boolean isPublic, String ownerId) {
         this.name = name;
         this.description = description;
         this.numberOfMembers = numberOfMembers;
         this.isPublic = isPublic;
+        this.ownerId = ownerId;
     }
 
     public String getName() {
@@ -49,5 +51,10 @@ public class Group implements Serializable {
 
     public void setPublic(boolean aPublic) {
         isPublic = aPublic;
+    }
+
+    public String getOwnerId() { return ownerId; }
+    public void setOwnerId(String ownerId) {
+        this.ownerId = ownerId;
     }
 }

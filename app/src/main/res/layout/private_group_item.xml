@@ -12,7 +12,7 @@
         android:layout_height="wrap_content">
 
         <TextView
-            android:id="@+id/tvPrivateGroupName"
+            android:id="@+id/tvGroupName"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Private group name"
@@ -28,7 +28,7 @@
             android:foregroundGravity="center">
 
             <Button
-                android:id="@+id/btnPrivateGroupType"
+                android:id="@+id/btnGroupType"
                 android:layout_width="84dp"
                 android:layout_height="32dp"
                 android:backgroundTint="@color/black"
@@ -47,7 +47,7 @@
     </LinearLayout>
 
     <TextView
-        android:id="@+id/tvPrivateGroupDescription"
+        android:id="@+id/tvGroupDescription"
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
         android:textColor="@color/white"
@@ -60,7 +60,7 @@
         android:orientation="horizontal">
 
         <TextView
-            android:id="@+id/tvPrivateNumberOfMembers"
+            android:id="@+id/tvNumberOfMembers"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textColor="@color/white"

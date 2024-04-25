@@ -36,6 +36,7 @@ import com.google.firebase.database.ValueEventListener;
 import com.hcmute.endsemesterproject.Adapters.ContactAdapter;
 import com.hcmute.endsemesterproject.Models.Contacts;
 import com.hcmute.endsemesterproject.R;
+import com.hcmute.endsemesterproject.Services.GroupService;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -56,6 +57,7 @@ public class CreateGroupActivity extends AppCompatActivity {
     private ContactAdapter contactAdapter;
     private RadioButton publicRadioButton;
     private EditText editTextGroupDescription;
+    private GroupService groupService;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,6 +67,8 @@ public class CreateGroupActivity extends AppCompatActivity {
         mAuth = FirebaseAuth.getInstance();
         groupsRef = FirebaseDatabase.getInstance().getReference().child("beta-groups");
         usersRef = FirebaseDatabase.getInstance().getReference().child("Users");
+
+        groupService = new GroupService();
 
         imageViewVerify  = findViewById(R.id.imageViewVerify);
         progressBarVerify = findViewById(R.id.progressBarVerify);
@@ -162,6 +166,7 @@ public class CreateGroupActivity extends AppCompatActivity {
         String groupDescription = editTextGroupDescription.getText().toString();
         String ownerId = FirebaseAuth.getInstance().getCurrentUser().getUid();
         String groupType = publicRadioButton.isChecked() ? "public" : "private";
+        boolean isPublic = groupType.equals("public");
         List<Contacts> contactsList1= contactAdapter.getSelectedContacts();
         List<String> userIdList = new ArrayList<>();
         userIdList.add(ownerId); // Add owner's ID to the member list
@@ -169,32 +174,17 @@ public class CreateGroupActivity extends AppCompatActivity {
             userIdList.add(contacts.getId());
         }
 
-        // Firebase reference to the groups category (public or private)
-        DatabaseReference groupsCategoryRef = FirebaseDatabase.getInstance().getReference().child("beta-groups").child(groupType);
-        DatabaseReference groupRef = groupsCategoryRef.child(groupName);
+        groupService.createGroup(groupName, groupDescription, ownerId, isPublic, userIdList, new GroupService.GroupOperationListener() {
+            @Override
+            public void onGroupOperationSuccess(String message) {
+                Toast.makeText(CreateGroupActivity.this, "Group created successfully", Toast.LENGTH_SHORT).show();
+            }
 
-        // Set group details (name, description, ownerId)
-        groupRef.child("name").setValue(groupName);
-        groupRef.child("description").setValue(groupDescription);
-        groupRef.child("ownerId").setValue(ownerId);
-
-        // Set group members
-        groupRef.child("members").setValue(userIdList)
-                .addOnSuccessListener(new OnSuccessListener<Void>() {
-                    @Override
-                    public void onSuccess(Void aVoid) {
-                        // Group and members added successfully
-                        Toast.makeText(CreateGroupActivity.this, "Group created successfully", Toast.LENGTH_SHORT).show();
-                        // Optionally, navigate to another activity or perform additional actions
-                    }
-                })
-                .addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception e) {
-                        // Failed to create group or add members
-                        Toast.makeText(CreateGroupActivity.this, "Failed to create group: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                    }
-                });
+            @Override
+            public void onGroupOperationFailure(String errorMessage) {
+                Toast.makeText(CreateGroupActivity.this, "Failed to create group: " + errorMessage, Toast.LENGTH_SHORT).show();
+            }
+        });
 
         buttonCreate.setEnabled(false);
     }

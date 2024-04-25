@@ -58,13 +58,14 @@ public class BetaGroupFragment extends Fragment {
         betaGroupsRef =  FirebaseDatabase.getInstance().getReference().child("beta-groups");
         allGroups = new ArrayList<Group>();
 
-        retrieveGroups();
-
         groupAdapter = new GroupAdapter(requireContext(), allGroups);
         groupsListView.destroyDrawingCache();
         groupsListView.setVisibility(ListView.INVISIBLE);
         groupsListView.setVisibility(ListView.VISIBLE);
         groupsListView.setAdapter(groupAdapter);
+
+        retrieveGroups();
+
 
         groupAdapter.setLeaveGroupCallback(new GroupAdapter.LeaveGroupCallback() {
             @Override
@@ -98,9 +99,9 @@ public class BetaGroupFragment extends Fragment {
             public void onGroupsFetched(List<Group> groups) {
                 allGroups.clear();
                 allGroups.addAll(groups);
-
-                groupAdapter.notifyDataSetChanged(); // Notify the adapter that the dataset has changed
+                groupAdapter.setGroups(allGroups);
                 groupsListView.setAdapter(groupAdapter);
+                groupAdapter.notifyDataSetChanged();
             }
 
             @Override

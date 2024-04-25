@@ -2,6 +2,8 @@ package com.hcmute.endsemesterproject.Services;
 
 import androidx.annotation.NonNull;
 
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -31,6 +33,7 @@ public class GroupService {
                     String groupType = groupTypeSnapshot.getKey(); // "private" or "public"
                     for (DataSnapshot groupSnapshot : groupTypeSnapshot.getChildren()) {
                         String groupName = groupSnapshot.getKey(); // Group name
+                        String groupDescription = (String) groupSnapshot.child("description").getValue();
                         boolean isPublic = groupType.equals("public");
 
                         // Check if the user is a member of the group
@@ -45,9 +48,9 @@ public class GroupService {
                         if (isPublic) {
                             Group group = new Group();
                             group.setName(groupName);
+                            group.setDescription(groupDescription);
                             group.setPublic(isPublic);
                             group.setNumberOfMembers(groupSnapshot.child("members").getChildrenCount()); // Get the count of members
-                            group.setDescription("This is default group description.");
                             if (isMember) {
                                 allGroups.add(0, group);
                             } else {
@@ -58,9 +61,9 @@ public class GroupService {
                                 // Construct Group object using the group name, public/private status, and number of members
                                 Group group = new Group();
                                 group.setName(groupName);
+                                group.setDescription(groupDescription);
                                 group.setPublic(isPublic);
                                 group.setNumberOfMembers(groupSnapshot.child("members").getChildrenCount()); // Get the count of members
-                                group.setDescription("This is default group description.");
                                 allGroups.add(group);
                             }
                         }
@@ -91,7 +94,8 @@ public class GroupService {
 
     private List<Group> filterGroups(List<Group> groups, boolean isPublic) {
         List<Group> filteredGroups = new ArrayList<>();
-        for (Group group : groups) {
+        for (int i = 0; i < groups.size(); i++) {
+            Group group = groups.get(i);
             if (group.isPublic() == isPublic) {
                 filteredGroups.add(group);
             }
@@ -136,6 +140,54 @@ public class GroupService {
             }
         });
     }
+
+    public void createGroup(String groupName, String groupDescription, String ownerId, boolean isPublic, List<String> userIdList, GroupOperationListener listener) {
+        // Firebase reference to the groups category (public or private)
+        DatabaseReference groupsCategoryRef = groupsRef.child(isPublic ? "public" : "private");
+        DatabaseReference groupRef = groupsCategoryRef.child(groupName);
+
+        // Check if the group name already exists
+        groupRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                if (dataSnapshot.exists()) {
+                    // Group name already exists, notify the listener about the failure
+                    listener.onGroupOperationFailure("Group name already exists.");
+                } else {
+                    // Group name is unique, proceed with creating the group
+
+                    // Set group details (name, description, ownerId)
+                    groupRef.child("name").setValue(groupName);
+                    groupRef.child("description").setValue(groupDescription);
+                    groupRef.child("ownerId").setValue(ownerId);
+
+                    // Set group members
+                    groupRef.child("members").setValue(userIdList)
+                            .addOnSuccessListener(new OnSuccessListener<Void>() {
+                                @Override
+                                public void onSuccess(Void aVoid) {
+                                    // Group and members added successfully
+                                    listener.onGroupOperationSuccess("Group and members added successfully.");
+                                }
+                            })
+                            .addOnFailureListener(new OnFailureListener() {
+                                @Override
+                                public void onFailure(@NonNull Exception e) {
+                                    // Failed to create group or add members
+                                    listener.onGroupOperationFailure("Failed to add group.");
+                                }
+                            });
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+                // Notify the listener if there's an error
+                listener.onGroupOperationFailure("Error checking group name: " + databaseError.getMessage());
+            }
+        });
+    }
+
 
     // Define an interface for group operation callbacks
     public interface GroupOperationListener {
