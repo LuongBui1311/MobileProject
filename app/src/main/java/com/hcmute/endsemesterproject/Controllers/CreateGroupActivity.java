@@ -174,7 +174,7 @@ public class CreateGroupActivity extends AppCompatActivity {
             userIdList.add(contacts.getId());
         }
 
-        groupService.createGroup(groupName, groupDescription, ownerId, isPublic, userIdList, new GroupService.GroupOperationListener() {
+        groupService.createGroup(groupName, groupDescription, isPublic, ownerId, userIdList, new GroupService.GroupOperationListener() {
             @Override
             public void onGroupOperationSuccess(String message) {
                 Toast.makeText(CreateGroupActivity.this, "Group created successfully", Toast.LENGTH_SHORT).show();

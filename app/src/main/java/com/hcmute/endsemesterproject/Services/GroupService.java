@@ -1,5 +1,7 @@
 package com.hcmute.endsemesterproject.Services;
 
+import android.provider.ContactsContract;
+
 import androidx.annotation.NonNull;
 
 import com.google.android.gms.tasks.OnFailureListener;
@@ -12,7 +14,9 @@ import com.google.firebase.database.ValueEventListener;
 import com.hcmute.endsemesterproject.Models.Group;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class GroupService {
     private DatabaseReference groupsRef;
@@ -22,72 +26,83 @@ public class GroupService {
         groupsRef = FirebaseDatabase.getInstance().getReference().child("beta-groups");
     }
 
-    public void retrieveGroups(String userId, final GroupsFetchListener listener) {
-        List<Group> allGroups = new ArrayList<>();
+    public void createGroup(String name, String description, boolean isPublic, String ownerId, List<String> memberIds, GroupOperationListener listener) {
+        DatabaseReference groupsRef = FirebaseDatabase.getInstance().getReference().child("beta-groups");
 
-        // Add a listener for retrieving all groups
+        DatabaseReference newGroupRef = groupsRef.push();
+        String groupId = newGroupRef.getKey();
+
+        // Create the group structure
+        Map<String, Object> groupData = new HashMap<>();
+        groupData.put("name", name);
+        groupData.put("description", description);
+        groupData.put("owner-id", ownerId);
+        groupData.put("is-public", isPublic);
+
+        // Add the members to the group structure
+        Map<String, Object> membersData = new HashMap<>();
+        for (int i = 0; i < memberIds.size(); i++) {
+            membersData.put(String.valueOf(i), memberIds.get(i));
+        }
+        groupData.put("members", membersData);
+
+        // Set the group data to the database
+        newGroupRef.setValue(groupData)
+                .addOnSuccessListener(aVoid -> listener.onGroupOperationSuccess("Group created successfully."))
+                .addOnFailureListener(e -> listener.onGroupOperationFailure("Failed to create group: " + e.getMessage()));
+    }
+
+    public void retrieveGroups(String userId, final GroupsFetchListener listener) {
+        List<Group> groups = new ArrayList<>();
+
         groupsRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                for (DataSnapshot groupTypeSnapshot : dataSnapshot.getChildren()) {
-                    String groupType = groupTypeSnapshot.getKey(); // "private" or "public"
-                    for (DataSnapshot groupSnapshot : groupTypeSnapshot.getChildren()) {
-                        String groupName = groupSnapshot.getKey(); // Group name
-                        String groupDescription = (String) groupSnapshot.child("description").getValue();
-                        boolean isPublic = groupType.equals("public");
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                for (DataSnapshot groupSnapshot : snapshot.getChildren()) {
+                    String groupId = groupSnapshot.getKey();
+                    String name = groupSnapshot.child("name").getValue(String.class);
+                    String description = groupSnapshot.child("description").getValue(String.class);
+                    String ownerId = groupSnapshot.child("owner-id").getValue(String.class);
+                    boolean isPublic = groupSnapshot.child("is-public").getValue(Boolean.class);
 
-                        // Check if the user is a member of the group
-                        boolean isMember = false;
-                        for (DataSnapshot memberSnapshot : groupSnapshot.child("members").getChildren()) {
-                            if (memberSnapshot.getValue(String.class).equals(userId)) {
-                                isMember = true;
-                                break;
-                            }
+                    // Check if the user is a member of the group
+                    boolean isMember = false;
+                    for (DataSnapshot memberSnapshot : groupSnapshot.child("members").getChildren()) {
+                        if (memberSnapshot.getValue(String.class).equals(userId)) {
+                            isMember = true;
+                            break;
                         }
-
-                        if (isPublic) {
-                            Group group = new Group();
-                            group.setName(groupName);
-                            group.setDescription(groupDescription);
-                            group.setPublic(isPublic);
-                            group.setNumberOfMembers(groupSnapshot.child("members").getChildrenCount()); // Get the count of members
-                            if (isMember) {
-                                allGroups.add(0, group);
-                            } else {
-                                allGroups.add(group);
-                            }
-                        } else {
-                            if (isMember) {
-                                // Construct Group object using the group name, public/private status, and number of members
-                                Group group = new Group();
-                                group.setName(groupName);
-                                group.setDescription(groupDescription);
-                                group.setPublic(isPublic);
-                                group.setNumberOfMembers(groupSnapshot.child("members").getChildrenCount()); // Get the count of members
-                                allGroups.add(group);
-                            }
-                        }
-
                     }
+
+                    Group group = new Group(groupId, name, description, (int) groupSnapshot.child("members").getChildrenCount(), isPublic, ownerId);
+                    if (isPublic) {
+                        if (isMember) {
+                            groups.add(0, group);
+                        } else {
+                            groups.add(group);
+                        }
+                    } else {
+                        if (isMember) {
+                            groups.add(group);
+                        }
+                    }
+                    // Filter the groups list to get private then public groups
+                    List<Group> privateGroups = filterGroups(groups, false);
+                    List<Group> publicGroups = filterGroups(groups, true);
+
+                    // Combine the lists of private and public groups
+                    groups.clear(); // Clear the list before adding filtered groups
+                    groups.addAll(privateGroups); // Add private groups first
+                    groups.addAll(publicGroups); // Add public groups
+
+                    // Notify the listener with the retrieved groups
+                    listener.onGroupsFetched(groups);
                 }
-
-                // Filter the groups list to get private then public groups
-                List<Group> privateGroups = filterGroups(allGroups, false);
-                List<Group> publicGroups = filterGroups(allGroups, true);
-
-                // Combine the lists of private and public groups
-                allGroups.clear(); // Clear the list before adding filtered groups
-                allGroups.addAll(privateGroups); // Add private groups first
-                allGroups.addAll(publicGroups); // Add public groups
-
-                // Notify the listener with the retrieved groups
-                listener.onGroupsFetched(allGroups);
             }
 
             @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-                // Notify the listener if there's an error
-                listener.onFetchFailed(databaseError.toException());
+            public void onCancelled(@NonNull DatabaseError error) {
+                listener.onFetchFailed(error.toException());
             }
         });
     }
@@ -103,95 +118,146 @@ public class GroupService {
         return filteredGroups;
     }
 
+    public void getUserIdsInGroup(String groupId, UserIdsFetchListener listener) {
+        DatabaseReference groupMembersRef = groupsRef.child(groupId).child("members");
+
+        groupMembersRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                List<String> userIds = new ArrayList<>();
+                for (DataSnapshot memberSnapshot : dataSnapshot.getChildren()) {
+                    String userId = memberSnapshot.getValue(String.class);
+                    userIds.add(userId);
+                }
+                listener.onUserIdsFetched(userIds);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+                listener.onFetchFailed(databaseError.toException());
+            }
+        });
+    }
+
+    // Define an interface for the callback
+    public interface UserIdsFetchListener {
+        void onUserIdsFetched(List<String> userIds);
+        void onFetchFailed(Exception e);
+    }
+
     // Define an interface for the callback
     public interface GroupsFetchListener {
         void onGroupsFetched(List<Group> groups);
         void onFetchFailed(Exception e);
     }
 
-    public void removeUserFromGroup(String groupName, String userId, GroupOperationListener listener) {
-        DatabaseReference groupMembersRef = groupsRef.child("private").child(groupName).child("members");
-        // Find the key corresponding to the user ID in the group's members list
-        groupMembersRef.orderByValue().equalTo(userId).addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                    // Get the key of the user ID in the group's members list
-                    String key = snapshot.getKey();
+    public void removeUserFromGroup(String groupId, String userId, GroupOperationListener listener) {
+        DatabaseReference groupRef = groupsRef.child(groupId).child("members");
 
-                    // Remove the member using the key
-                    groupMembersRef.child(key).removeValue()
-                            .addOnCompleteListener(task -> {
-                                if (task.isSuccessful()) {
-                                    // Notify the listener about the success
-                                    listener.onGroupOperationSuccess("You have left the group.");
-                                } else {
-                                    // Notify the listener about the failure
-                                    listener.onGroupOperationFailure("Failed to leave the group. Please try again.");
-                                }
-                            });
-                }
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-                // Notify the listener about the cancellation
-                listener.onGroupOperationFailure("Error leaving group: " + databaseError.getMessage());
-            }
-        });
-    }
-
-    public void createGroup(String groupName, String groupDescription, String ownerId, boolean isPublic, List<String> userIdList, GroupOperationListener listener) {
-        // Firebase reference to the groups category (public or private)
-        DatabaseReference groupsCategoryRef = groupsRef.child(isPublic ? "public" : "private");
-        DatabaseReference groupRef = groupsCategoryRef.child(groupName);
-
-        // Check if the group name already exists
         groupRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                if (dataSnapshot.exists()) {
-                    // Group name already exists, notify the listener about the failure
-                    listener.onGroupOperationFailure("Group name already exists.");
+                boolean userRemoved = false;
+                for (DataSnapshot memberSnapshot : dataSnapshot.getChildren()) {
+                    if (memberSnapshot.getValue(String.class).equals(userId)) {
+                        // Remove the member from the group
+                        memberSnapshot.getRef().removeValue();
+                        userRemoved = true;
+                        break; // No need to continue if the user is found and removed
+                    }
+                }
+
+                if (userRemoved) {
+                    listener.onGroupOperationSuccess("User removed from group successfully.");
                 } else {
-                    // Group name is unique, proceed with creating the group
-
-                    // Set group details (name, description, ownerId)
-                    groupRef.child("name").setValue(groupName);
-                    groupRef.child("description").setValue(groupDescription);
-                    groupRef.child("ownerId").setValue(ownerId);
-
-                    // Set group members
-                    groupRef.child("members").setValue(userIdList)
-                            .addOnSuccessListener(new OnSuccessListener<Void>() {
-                                @Override
-                                public void onSuccess(Void aVoid) {
-                                    // Group and members added successfully
-                                    listener.onGroupOperationSuccess("Group and members added successfully.");
-                                }
-                            })
-                            .addOnFailureListener(new OnFailureListener() {
-                                @Override
-                                public void onFailure(@NonNull Exception e) {
-                                    // Failed to create group or add members
-                                    listener.onGroupOperationFailure("Failed to add group.");
-                                }
-                            });
+                    listener.onGroupOperationFailure("User not found in group.");
                 }
             }
 
             @Override
             public void onCancelled(@NonNull DatabaseError databaseError) {
-                // Notify the listener if there's an error
-                listener.onGroupOperationFailure("Error checking group name: " + databaseError.getMessage());
+                listener.onGroupOperationFailure("Error removing user from group: " + databaseError.getMessage());
             }
         });
     }
 
+    public void updateGroupName(String groupId, String newName, GroupOperationListener listener) {
+        DatabaseReference groupRef = groupsRef.child(groupId).child("name");
+
+        // Update the group name in the database
+        groupRef.setValue(newName)
+                .addOnSuccessListener(aVoid -> listener.onGroupOperationSuccess("Group name updated successfully."))
+                .addOnFailureListener(e -> listener.onGroupOperationFailure("Failed to update group name: " + e.getMessage()));
+    }
+
+    public void updateGroupDescription(String groupId, String newDescription, GroupOperationListener listener) {
+        DatabaseReference groupRef = groupsRef.child(groupId).child("description");
+
+        // Update the group description in the database
+        groupRef.setValue(newDescription)
+                .addOnSuccessListener(aVoid -> listener.onGroupOperationSuccess("Group description updated successfully."))
+                .addOnFailureListener(e -> listener.onGroupOperationFailure("Failed to update group description: " + e.getMessage()));
+    }
+
+    public void addMembersToGroup(String groupId, List<String> userIds, GroupOperationListener listener) {
+        DatabaseReference groupRef = groupsRef.child(groupId);
+
+        groupRef.child("members").addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                // Get the current count of members to determine the index for adding new members
+                int memberCount = (int) dataSnapshot.getChildrenCount();
+
+                // Loop through the list of user IDs and add them to the group
+                for (String userId : userIds) {
+                    // Add the user ID to the group's members with an index based on the current member count
+                    groupRef.child("members").child(String.valueOf(memberCount)).setValue(userId);
+                    memberCount++; // Increment the member count for the next member
+                }
+
+                // Notify the listener about the success
+                listener.onGroupOperationSuccess("Members added to group successfully.");
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+                // Notify the listener about the failure
+                listener.onGroupOperationFailure("Failed to add members to group: " + databaseError.getMessage());
+            }
+        });
+    }
 
     // Define an interface for group operation callbacks
     public interface GroupOperationListener {
         void onGroupOperationSuccess(String message);
         void onGroupOperationFailure(String errorMessage);
     }
+
+    public void getAllMemberIdsInGroup(String groupId, AllMemberIdsFetchListener listener) {
+        DatabaseReference groupMembersRef = groupsRef.child(groupId).child("members");
+
+        groupMembersRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                List<String> memberIds = new ArrayList<>();
+                for (DataSnapshot memberSnapshot : dataSnapshot.getChildren()) {
+                    String memberId = memberSnapshot.getValue(String.class);
+                    memberIds.add(memberId);
+                }
+                listener.onAllMemberIdsFetched(memberIds);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+                listener.onFetchFailed(databaseError.toException());
+            }
+        });
+    }
+
+    // Define an interface for the callback
+    public interface AllMemberIdsFetchListener {
+        void onAllMemberIdsFetched(List<String> memberIds);
+        void onFetchFailed(Exception e);
+    }
+
 }

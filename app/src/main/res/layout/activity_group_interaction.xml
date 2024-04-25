@@ -15,9 +15,10 @@
         android:gravity="center_vertical"
         android:layout_marginBottom="16dp">
 
-        <TextView
+        <EditText
             android:id="@+id/group_name"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
+            android:layout_weight="1"
             android:layout_height="wrap_content"
             android:text="Group Name"
             android:textSize="24sp"
@@ -42,7 +43,7 @@
         android:gravity="center_vertical"
         android:layout_marginBottom="32dp">
 
-        <TextView
+        <EditText
             android:id="@+id/group_description"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
@@ -66,75 +67,35 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical">
-
-        <LinearLayout
+        <!-- Text for View Members Button -->
+        <Button
             android:id="@+id/view_members_button"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical">
+            android:drawableLeft="@drawable/ic_view_members"
+            android:text="View Members"
+            android:textColor="@color/black"
+            android:background="?android:attr/selectableItemBackground"/>
 
-            <!-- Icon for View Members Button -->
-            <ImageView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:src="@drawable/ic_view_members"
-                android:paddingRight="8dp"/>
 
-            <!-- Text for View Members Button -->
-            <Button
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="View Members"
-                android:textColor="@color/black"
-                android:background="?android:attr/selectableItemBackground"/>
-        </LinearLayout>
-
-        <LinearLayout
-            android:id="@+id/add_members_button"
+        <!-- Text for Add Members Button -->
+        <Button
+            android:id="@+id/add_member_button"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical">
+            android:drawableLeft="@drawable/ic_add_members"
+            android:text="Add Members"
+            android:textColor="@color/black"
+            android:background="?android:attr/selectableItemBackground"/>
 
-            <!-- Icon for Add Members Button -->
-            <ImageView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:src="@drawable/ic_add_members"
-                android:paddingRight="8dp"/>
-
-            <!-- Text for Add Members Button -->
-            <Button
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Add Members"
-                android:textColor="@color/black"
-                android:background="?android:attr/selectableItemBackground"/>
-        </LinearLayout>
-
-        <LinearLayout
-            android:id="@+id/other_options_button"
+        <!-- Text for Other Options Button -->
+        <Button
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical">
-
-            <!-- Icon for Other Options Button -->
-            <ImageView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:src="@drawable/ic_other_options"
-                android:paddingRight="8dp"/>
-
-            <!-- Text for Other Options Button -->
-            <Button
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Other Options"
-                android:textColor="@color/black"
-                android:background="?android:attr/selectableItemBackground"/>
-        </LinearLayout>
+            android:drawableLeft="@drawable/ic_other_options"
+            android:text="Other Options"
+            android:textColor="@color/black"
+            android:background="?android:attr/selectableItemBackground"/>
     </LinearLayout>
 
     <!-- Spacer to push buttons to the bottom -->

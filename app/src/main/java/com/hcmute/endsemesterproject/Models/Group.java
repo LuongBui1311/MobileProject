@@ -3,6 +3,7 @@ package com.hcmute.endsemesterproject.Models;
 import java.io.Serializable;
 
 public class Group implements Serializable {
+    private String id;
     private String name;
     private String description;
     private String ownerId;
@@ -13,13 +14,17 @@ public class Group implements Serializable {
 
     }
 
-    public Group(String name, String description, int numberOfMembers, boolean isPublic, String ownerId) {
+    public Group(String id, String name, String description, int numberOfMembers, boolean isPublic, String ownerId) {
+        this.id = id;
         this.name = name;
         this.description = description;
         this.numberOfMembers = numberOfMembers;
         this.isPublic = isPublic;
         this.ownerId = ownerId;
     }
+
+    public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
 
     public String getName() {
         return name;

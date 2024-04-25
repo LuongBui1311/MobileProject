@@ -129,6 +129,7 @@ public class BetaGroupChatActivity extends AppCompatActivity {
             public void onClick(View v) {
                 // Start GroupInteractionActivity
                 Intent intent = new Intent(BetaGroupChatActivity.this, GroupInteractionActivity.class);
+                intent.putExtra("groupObject", currentGroup);
                 startActivity(intent);
             }
         });
