@@ -17,6 +17,7 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import com.google.firebase.auth.FirebaseAuth;
 import com.hcmute.endsemesterproject.Models.Group;
 import com.hcmute.endsemesterproject.Models.UserDetails;
 import com.hcmute.endsemesterproject.R;
@@ -37,6 +38,7 @@ public class GroupInteractionActivity extends AppCompatActivity {
     private GroupService groupService;
     private Button viewMembersButton;
     private Button addMembersButton;
+    private Button leaveGroupButton;
     private static final int REQUEST_CODE_ADD_MEMBERS = 101;
 
     @Override
@@ -54,6 +56,7 @@ public class GroupInteractionActivity extends AppCompatActivity {
         groupDescriptionEditText = findViewById(R.id.group_description);
         viewMembersButton = findViewById(R.id.view_members_button);
         addMembersButton = findViewById(R.id.add_member_button);
+        leaveGroupButton = findViewById(R.id.leave_group_button);
 
         groupNameEditText.setEnabled(false);
         groupDescriptionEditText.setEnabled(false);
@@ -140,6 +143,28 @@ public class GroupInteractionActivity extends AppCompatActivity {
             }
         });
 
+        leaveGroupButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                groupService.removeUserFromGroup(currentGroup.getId(), FirebaseAuth.getInstance().getCurrentUser().getUid(), new GroupService.GroupOperationListener() {
+                    @Override
+                    public void onGroupOperationSuccess(String message) {
+                        // Leave group successful, navigate to MainActivity
+                        Intent intent = new Intent(GroupInteractionActivity.this, MainActivity.class);
+                        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK); // Clear back stack
+                        startActivity(intent);
+                    }
+
+                    @Override
+                    public void onGroupOperationFailure(String errorMessage) {
+                        // Leave group failed, show toast to try again
+                        Toast.makeText(GroupInteractionActivity.this, "Failed to leave group: " + errorMessage, Toast.LENGTH_SHORT).show();
+                    }
+                });
+            }
+        });
+
+
     }
 
     @Override
@@ -155,6 +180,7 @@ public class GroupInteractionActivity extends AppCompatActivity {
                     userIds.add(user.getUid()); // Assuming getId() returns the user ID
                 }
 
+                currentGroup = (Group) getIntent().getSerializableExtra("groupObject");
                 // Call addMembersToGroup method with the extracted user IDs and group ID
                 addMembersToGroup(currentGroup.getId(), userIds);
             } else {

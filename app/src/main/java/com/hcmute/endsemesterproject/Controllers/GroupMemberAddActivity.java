@@ -122,6 +122,7 @@ public class GroupMemberAddActivity extends AppCompatActivity {
                 // Return selected users list to calling activity
                 Intent resultIntent = new Intent();
                 resultIntent.putExtra("selectedUsers", new ArrayList<>(selectedUsersList));
+                resultIntent.putExtra("groupObject", currentGroup);
                 setResult(RESULT_OK, resultIntent);
                 finish(); // Close this activity
             }

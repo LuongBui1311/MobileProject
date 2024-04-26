@@ -35,6 +35,7 @@ import com.hcmute.endsemesterproject.Adapters.GroupMessageAdapter;
 import com.hcmute.endsemesterproject.Models.BetaGroupMessage;
 import com.hcmute.endsemesterproject.Models.Group;
 import com.hcmute.endsemesterproject.R;
+import com.hcmute.endsemesterproject.Services.GroupService;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -75,6 +76,9 @@ public class BetaGroupChatActivity extends AppCompatActivity {
     private TextView chatPromptTextView;
     private Button joinGroupButton;
 
+    private GroupService groupService;
+    private boolean isGroupMember = false;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -83,6 +87,7 @@ public class BetaGroupChatActivity extends AppCompatActivity {
 
         betaGroupsRef = FirebaseDatabase.getInstance().getReference().child("beta-groups");
 
+        groupService = new GroupService();
         loadGroupInfo();
 
         sendMessageButton = findViewById(R.id.send_message_button);
@@ -114,6 +119,42 @@ public class BetaGroupChatActivity extends AppCompatActivity {
         }
 
 
+        joinGroupButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                List<String> userIdList = new ArrayList<>();
+                String uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
+                userIdList.add(uid);
+
+                if (!isGroupMember) {
+                    groupService.addMembersToGroup(currentGroup.getId(), userIdList, new GroupService.GroupOperationListener() {
+                        @Override
+                        public void onGroupOperationSuccess(String message) {
+                            checkMembership();
+                        }
+
+                        @Override
+                        public void onGroupOperationFailure(String errorMessage) {
+                            Log.d("join public group error", errorMessage);
+                        }
+                    });
+                } else {
+                    groupService.removeUserFromGroup(currentGroup.getId(), uid, new GroupService.GroupOperationListener() {
+                        @Override
+                        public void onGroupOperationSuccess(String message) {
+                            checkMembership();
+                        }
+
+                        @Override
+                        public void onGroupOperationFailure(String errorMessage) {
+                            Log.d("leave public group error", errorMessage);
+
+                        }
+                    });
+                }
+
+            }
+        });
 
 
         // Initialize message list
@@ -165,23 +206,10 @@ public class BetaGroupChatActivity extends AppCompatActivity {
     }
 
     private void checkMembership() {
-        DatabaseReference groupRef = FirebaseDatabase.getInstance().getReference().child("beta-groups").child("public").child(currentGroup.getName()).child("members");
-
-        // Add a ValueEventListener to the groupRef
-        groupRef.addListenerForSingleValueEvent(new ValueEventListener() {
+        groupService.checkMembership(currentGroup.getId(), FirebaseAuth.getInstance().getCurrentUser().getUid(), new GroupService.MembershipCheckListener() {
             @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                boolean isMember = false;
-
-                // Iterate through the children of the members node
-                for (DataSnapshot childSnapshot : dataSnapshot.getChildren()) {
-                    // Check if the child value (user ID) matches the current user's ID
-                    if (childSnapshot.getValue(String.class).equals(FirebaseAuth.getInstance().getCurrentUser().getUid())) {
-                        // User is a member of the group
-                        isMember = true;
-                        break; // Exit the loop since we found a match
-                    }
-                }
+            public void onMembershipChecked(boolean isMember) {
+                isGroupMember = isMember;
 
                 // Update UI based on membership status
                 if (isMember) {
@@ -189,14 +217,6 @@ public class BetaGroupChatActivity extends AppCompatActivity {
                     chatPromptTextView.setText("You are a member of this group.");
                     joinGroupButton.setText("Leave Group");
                     joinGroupButton.setBackgroundColor(getResources().getColor(R.color.red));
-                    joinGroupButton.setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View v) {
-                            // Implement leave group functionality
-                            // For example:
-                            // leaveGroup();
-                        }
-                    });
 
                     sendFileButton.setEnabled(true);
                     sendMessageButton.setEnabled(true);
@@ -206,27 +226,16 @@ public class BetaGroupChatActivity extends AppCompatActivity {
                     chatPromptTextView.setText("To chat, please join this group.");
                     joinGroupButton.setText("Join Group");
                     joinGroupButton.setBackgroundColor(getResources().getColor(R.color.blue));
-                    joinGroupButton.setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View v) {
-                            // Implement join group functionality
-                            // For example:
-                            // joinGroup();
-                        }
-                    });
                 }
             }
 
             @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-                // Handle any errors
-                Log.e("BetaGroupChatActivity", "Failed to check membership: " + databaseError.getMessage());
+            public void onCheckFailed(Exception e) {
+                Log.e("BetaGroupChatActivity", "Failed to check membership: " + e.getMessage());
+
             }
         });
     }
-
-
-
 
     private void sendMessage() {
         String messageText = messageInput.getText().toString().trim();

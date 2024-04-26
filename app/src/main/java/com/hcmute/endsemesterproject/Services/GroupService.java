@@ -200,19 +200,36 @@ public class GroupService {
     }
 
     public void addMembersToGroup(String groupId, List<String> userIds, GroupOperationListener listener) {
-        DatabaseReference groupRef = groupsRef.child(groupId);
+        DatabaseReference groupRef = groupsRef.child(groupId).child("members");
 
-        groupRef.child("members").addListenerForSingleValueEvent(new ValueEventListener() {
+        groupRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                // Get the current count of members to determine the index for adding new members
-                int memberCount = (int) dataSnapshot.getChildrenCount();
+                int maxIndex = -1; // Initialize with -1, assuming indices start from 0
+                for (DataSnapshot memberSnapshot : dataSnapshot.getChildren()) {
+                    int index = Integer.parseInt(memberSnapshot.getKey());
+                    if (index > maxIndex) {
+                        maxIndex = index;
+                    }
+                }
 
-                // Loop through the list of user IDs and add them to the group
+                // Loop through the list of user IDs and add them to the group if not already present
                 for (String userId : userIds) {
-                    // Add the user ID to the group's members with an index based on the current member count
-                    groupRef.child("members").child(String.valueOf(memberCount)).setValue(userId);
-                    memberCount++; // Increment the member count for the next member
+                    // Check if the user ID is already in the group
+                    boolean userExists = false;
+                    for (DataSnapshot memberSnapshot : dataSnapshot.getChildren()) {
+                        if (memberSnapshot.getValue(String.class).equals(userId)) {
+                            userExists = true;
+                            break;
+                        }
+                    }
+
+                    if (!userExists) {
+                        // Increment the maximum index for the new member
+                        int newIndex = maxIndex + 1;
+                        groupRef.child(String.valueOf(newIndex)).setValue(userId);
+                        maxIndex = newIndex; // Update the maximum index
+                    }
                 }
 
                 // Notify the listener about the success
@@ -226,6 +243,8 @@ public class GroupService {
             }
         });
     }
+
+
 
     // Define an interface for group operation callbacks
     public interface GroupOperationListener {
@@ -259,5 +278,36 @@ public class GroupService {
         void onAllMemberIdsFetched(List<String> memberIds);
         void onFetchFailed(Exception e);
     }
+
+    public void checkMembership(String groupId, String userId, MembershipCheckListener listener) {
+        DatabaseReference groupMembersRef = groupsRef.child(groupId).child("members");
+
+        groupMembersRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                boolean isMember = false;
+                for (DataSnapshot memberSnapshot : dataSnapshot.getChildren()) {
+                    String memberId = memberSnapshot.getValue(String.class);
+                    if (memberId.equals(userId)) {
+                        isMember = true;
+                        break;
+                    }
+                }
+                listener.onMembershipChecked(isMember);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+                listener.onCheckFailed(databaseError.toException());
+            }
+        });
+    }
+
+    // Define an interface for the callback
+    public interface MembershipCheckListener {
+        void onMembershipChecked(boolean isMember);
+        void onCheckFailed(Exception e);
+    }
+
 
 }
