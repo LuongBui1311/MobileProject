@@ -34,8 +34,11 @@ import com.google.firebase.storage.UploadTask;
 import com.hcmute.endsemesterproject.Adapters.GroupMessageAdapter;
 import com.hcmute.endsemesterproject.Models.BetaGroupMessage;
 import com.hcmute.endsemesterproject.Models.Group;
+import com.hcmute.endsemesterproject.Models.UserDetails;
 import com.hcmute.endsemesterproject.R;
+import com.hcmute.endsemesterproject.Services.BetaMessageService;
 import com.hcmute.endsemesterproject.Services.GroupService;
+import com.hcmute.endsemesterproject.Services.UserService;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -78,7 +81,8 @@ public class BetaGroupChatActivity extends AppCompatActivity {
 
     private GroupService groupService;
     private boolean isGroupMember = false;
-
+    private UserService userService;
+    private BetaMessageService betaMessageService;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -86,8 +90,9 @@ public class BetaGroupChatActivity extends AppCompatActivity {
         setContentView(R.layout.activity_beta_group_chat);
 
         betaGroupsRef = FirebaseDatabase.getInstance().getReference().child("beta-groups");
-
+        userService = new UserService();
         groupService = new GroupService();
+        betaMessageService = new BetaMessageService();
         loadGroupInfo();
 
         sendMessageButton = findViewById(R.id.send_message_button);
@@ -343,44 +348,39 @@ public class BetaGroupChatActivity extends AppCompatActivity {
 
         // Fetch sender's name from Firebase Realtime Database
         DatabaseReference usersRef = FirebaseDatabase.getInstance().getReference().child("Users").child(userId);
-        usersRef.addListenerForSingleValueEvent(new ValueEventListener() {
+
+        userService.getUserDetails(userId, new UserService.UserFetchListener() {
             @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                if (dataSnapshot.exists()) {
-                    String senderName = dataSnapshot.child("name").getValue(String.class);
+            public void onUserFetched(UserDetails userDetails) {
+                // Create and send the message
+                BetaGroupMessage message = new BetaGroupMessage(messageId,
+                        userId,
+                        userDetails.getName(),
+                        timestamp,
+                        messageText,
+                        "text",
+                        "", // Pass an empty string for fileUrl
+                        "",
+                        "normal");
+                betaMessageService.createNewMessage(message, currentGroup.getId(), new BetaMessageService.OnMessageAddListener() {
+                    @Override
+                    public void onMessageAdded(String messageId) {
+                        Log.d("BetaGroupChatActivity", "Text message sent successfully");
+                        messageInput.setText("");
+                        sendMessageButton.setEnabled(true);
+                    }
 
-                    // Create and send the message
-                    BetaGroupMessage message = new BetaGroupMessage(messageId,
-                            userId,
-                            senderName,
-                            timestamp,
-                            messageText,
-                            "text",
-                            "", // Pass an empty string for fileUrl
-                            "");
-
-                    messagesRef.child(messageId).setValue(message)
-                            .addOnSuccessListener(new OnSuccessListener<Void>() {
-                                @Override
-                                public void onSuccess(Void aVoid) {
-                                    Log.d("BetaGroupChatActivity", "Text message sent successfully");
-                                    messageInput.setText("");
-                                    sendMessageButton.setEnabled(true);
-                                }
-                            })
-                            .addOnFailureListener(new OnFailureListener() {
-                                @Override
-                                public void onFailure(@NonNull Exception e) {
-                                    Log.e("BetaGroupChatActivity", "Failed to send text message: " + e.getMessage());
-                                    sendMessageButton.setEnabled(true);
-                                }
-                            });
-                }
+                    @Override
+                    public void onAddFailure(String errorMessage) {
+                        Log.e("BetaGroupChatActivity", "Failed to send text message: " + errorMessage);
+                        sendMessageButton.setEnabled(true);
+                    }
+                });
             }
 
             @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-                Log.e("BetaGroupChatActivity", "Failed to fetch user data: " + databaseError.getMessage());
+            public void onFetchFailed(Exception e) {
+                Log.e("BetaGroupChatActivity", "Failed to fetch user data: " + e.getMessage());
                 sendMessageButton.setEnabled(true);
             }
         });
@@ -395,73 +395,59 @@ public class BetaGroupChatActivity extends AppCompatActivity {
         long timestamp = System.currentTimeMillis();
         sendMessageButton.setEnabled(false);
 
-        // Firebase Database reference to "Users" table
-        DatabaseReference usersRef = FirebaseDatabase.getInstance().getReference().child("Users").child(userId);
-
-        // Query the "Users" table to fetch the sender's name
-        usersRef.addListenerForSingleValueEvent(new ValueEventListener() {
+        userService.getUserDetails(userId, new UserService.UserFetchListener() {
             @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                if (dataSnapshot.exists()) {
-                    String senderName = dataSnapshot.child("name").getValue(String.class);
+            public void onUserFetched(UserDetails userDetails) {
+                // Perform file upload to Firebase Storage
+                storageReference.putFile(selectedFileUri)
+                        .addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+                            @Override
+                            public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                                sendMessageButton.setEnabled(false);
 
-                    // Perform file upload to Firebase Storage
-                    storageReference.putFile(selectedFileUri)
-                            .addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
-                                @Override
-                                public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                                    sendMessageButton.setEnabled(false);
+                                storageReference.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+                                    @Override
+                                    public void onSuccess(Uri downloadUri) {
+                                        // Create the message object for file message
+                                        BetaGroupMessage message = new BetaGroupMessage(messageId,
+                                                userId,
+                                                userDetails.getName(), // Use the fetched sender's name
+                                                timestamp,
+                                                null,
+                                                getFileType(selectedFileUri),
+                                                downloadUri.toString(),
+                                                getFileNameFromUri(selectedFileUri),
+                                                "normal");
+                                        betaMessageService.createNewMessage(message, currentGroup.getId(), new BetaMessageService.OnMessageAddListener() {
+                                            @Override
+                                            public void onMessageAdded(String messageId) {
+                                                Log.d("BetaGroupChatActivity", "File message sent successfully");
+                                                clearSelectedFile();
+                                                sendMessageButton.setEnabled(true);
+                                            }
 
-                                    storageReference.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
-                                        @Override
-                                        public void onSuccess(Uri downloadUri) {
-                                            // Create the message object for file message
-                                            BetaGroupMessage message = new BetaGroupMessage(messageId,
-                                                    userId,
-                                                    senderName, // Use the fetched sender's name
-                                                    timestamp,
-                                                    null,
-                                                    getFileType(selectedFileUri),
-                                                    downloadUri.toString(),
-                                                    getFileNameFromUri(selectedFileUri));
-
-                                            // Save the message to the Firebase Database
-                                            messagesRef.child(messageId).setValue(message)
-                                                    .addOnSuccessListener(new OnSuccessListener<Void>() {
-                                                        @Override
-                                                        public void onSuccess(Void aVoid) {
-                                                            Log.d("BetaGroupChatActivity", "File message sent successfully");
-                                                            clearSelectedFile();
-                                                            sendMessageButton.setEnabled(true);
-                                                        }
-                                                    })
-                                                    .addOnFailureListener(new OnFailureListener() {
-                                                        @Override
-                                                        public void onFailure(@NonNull Exception e) {
-                                                            Log.e("BetaGroupChatActivity", "Failed to send file message: " + e.getMessage());
-                                                            sendMessageButton.setEnabled(true);
-                                                        }
-                                                    });
-                                        }
-                                    });
-                                }
-                            })
-                            .addOnFailureListener(new OnFailureListener() {
-                                @Override
-                                public void onFailure(@NonNull Exception e) {
-                                    Log.e("BetaGroupChatActivity", "Failed to upload file: " + e.getMessage());
-                                    sendMessageButton.setEnabled(true);
-                                }
-                            });
-                } else {
-                    Log.e("BetaGroupChatActivity", "User data does not exist for ID: " + userId);
-                    sendMessageButton.setEnabled(true);
-                }
+                                            @Override
+                                            public void onAddFailure(String errorMessage) {
+                                                Log.e("BetaGroupChatActivity", "Failed to send file message: " + errorMessage);
+                                                sendMessageButton.setEnabled(true);
+                                            }
+                                        });
+                                    }
+                                });
+                            }
+                        })
+                        .addOnFailureListener(new OnFailureListener() {
+                            @Override
+                            public void onFailure(@NonNull Exception e) {
+                                Log.e("BetaGroupChatActivity", "Failed to upload file: " + e.getMessage());
+                                sendMessageButton.setEnabled(true);
+                            }
+                        });
             }
 
             @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-                Log.e("BetaGroupChatActivity", "Failed to fetch user data: " + databaseError.getMessage());
+            public void onFetchFailed(Exception e) {
+                Log.e("BetaGroupChatActivity", "User data does not exist for ID: " + userId);
                 sendMessageButton.setEnabled(true);
             }
         });

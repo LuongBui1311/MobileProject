@@ -309,5 +309,32 @@ public class GroupService {
         void onCheckFailed(Exception e);
     }
 
+    public void getAllMessageIdsInGroup(String groupId, MessageIdsFetchListener listener) {
+        DatabaseReference groupMessagesRef = groupsRef.child(groupId).child("messages");
+
+        groupMessagesRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                List<String> messageIds = new ArrayList<>();
+                for (DataSnapshot messageSnapshot : dataSnapshot.getChildren()) {
+                    String messageId = messageSnapshot.getKey();
+                    messageIds.add(messageId);
+                }
+                listener.onMessageIdsFetched(messageIds);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+                listener.onFetchFailed(databaseError.toException());
+            }
+        });
+    }
+
+    // Define an interface for the callback
+    public interface MessageIdsFetchListener {
+        void onMessageIdsFetched(List<String> messageIds);
+        void onFetchFailed(Exception e);
+    }
+
 
 }

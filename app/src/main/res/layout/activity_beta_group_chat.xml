@@ -67,14 +67,15 @@
 
 
     <!-- Messages List -->
+
+    <!-- Selected File Placeholder -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/messages_list"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"/>
+        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
 
-    <!-- Selected File Placeholder -->
     <LinearLayout
         android:id="@+id/selected_file_placeholder"
         android:layout_width="match_parent"
@@ -126,6 +127,46 @@
 
         </LinearLayout>
     </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/emoji_like"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"  android:text="👍"  android:textSize="24sp"  android:onClick="onEmojiClick" />
+
+        <TextView
+            android:id="@+id/emoji_love"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"  android:text="❤️"  android:textSize="24sp"  android:onClick="onEmojiClick" />
+        <TextView
+            android:id="@+id/emoji_wow"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"  android:text="😮"  android:textSize="24sp"  android:onClick="onEmojiClick" />
+        <TextView
+            android:id="@+id/emoji_cry"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"  android:text="😭"  android:textSize="24sp"  android:onClick="onEmojiClick" />
+        <TextView
+            android:id="@+id/emoji_angry"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"  android:text="😠"  android:textSize="24sp"  android:onClick="onEmojiClick" />
+
+    </LinearLayout>
+
 
 
     <!-- Input Box and Send Button -->
