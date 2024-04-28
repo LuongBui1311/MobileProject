@@ -242,13 +242,18 @@ public class ReactionService {
         // Append "more" if there are more than 3 types of reactions
         if (reactionCounts.size() > 3) {
             int moreCount = 0;
-            for (int i = 3; i < topReactions.size(); i++) {
-                moreCount += reactionCounts.get(topReactions.get(i));
+            for (Map.Entry<String, Integer> entry : reactionCounts.entrySet()) {
+                String reaction = entry.getKey();
+                int count = entry.getValue();
+                if (!topReactions.contains(reaction)) {
+                    moreCount += count;
+                }
             }
             builder.append("more(+").append(moreCount).append(")");
         }
         return builder.toString().trim();
     }
+
 
 
     // Listener interface for fetching the top 3 reactions string

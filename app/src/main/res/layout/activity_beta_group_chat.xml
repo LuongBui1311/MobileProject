@@ -134,46 +134,51 @@
         android:orientation="horizontal"
         android:id="@+id/reaction_select_layout">
 
-        <TextView
-            android:id="@+id/emoji_like"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:gravity="center"  android:text="👍"  android:textSize="24sp"  android:onClick="onEmojiClick" />
+            <TextView
+                android:id="@+id/emoji_like"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="center"  android:text="👍"  android:textSize="24sp"  android:onClick="onEmojiClick" />
 
-        <TextView
-            android:id="@+id/emoji_love"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:gravity="center"  android:text="❤️"  android:textSize="24sp"  android:onClick="onEmojiClick" />
-        <TextView
-            android:id="@+id/emoji_wow"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:gravity="center"  android:text="😮"  android:textSize="24sp"  android:onClick="onEmojiClick" />
+            <TextView
+                android:id="@+id/emoji_love"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="center"  android:text="❤️"  android:textSize="24sp"  android:onClick="onEmojiClick" />
+            <TextView
+                android:id="@+id/emoji_wow"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="center"  android:text="😮"  android:textSize="24sp"  android:onClick="onEmojiClick" />
 
-        <TextView
-            android:id="@+id/emoji_relax"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:gravity="center"  android:text="😌"  android:textSize="24sp"  android:onClick="onEmojiClick" />
+            <TextView
+                android:id="@+id/emoji_relax"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="center"  android:text="😌"  android:textSize="24sp"  android:onClick="onEmojiClick" />
 
-        <TextView
-            android:id="@+id/emoji_cry"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:gravity="center"  android:text="😭"  android:textSize="24sp"  android:onClick="onEmojiClick" />
-        <TextView
-            android:id="@+id/emoji_angry"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:gravity="center"  android:text="😠"  android:textSize="24sp"  android:onClick="onEmojiClick" />
-
+            <TextView
+                android:id="@+id/emoji_cry"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="center"  android:text="😭"  android:textSize="24sp"  android:onClick="onEmojiClick" />
+            <TextView
+                android:id="@+id/emoji_angry"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="center"  android:text="😠"  android:textSize="24sp"  android:onClick="onEmojiClick" />
+            <TextView
+                android:id="@+id/emoji_remove"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="center"  android:text="❌"  android:textSize="24sp"  android:onClick="onEmojiClick" />
     </LinearLayout>
 
 

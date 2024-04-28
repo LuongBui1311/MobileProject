@@ -99,7 +99,6 @@ public class BetaGroupChatActivity extends AppCompatActivity {
     private UserService userService;
     private BetaMessageService betaMessageService;
     private ReactionService reactionService;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -148,6 +147,7 @@ public class BetaGroupChatActivity extends AppCompatActivity {
                 messagesRef = betaGroupsRef.child("private").child(currentGroup.getName()).child("messages");
             }
         }
+
 
 
         joinGroupButton.setOnClickListener(new View.OnClickListener() {
@@ -340,10 +340,35 @@ public class BetaGroupChatActivity extends AppCompatActivity {
             reactionType = "cry";
         } else if (emoji.equals("\uD83D\uDE20")) {
             reactionType = "angry";
+        } else if (emoji.equals("❌")) {
+            reactionType = "remove";
         }
+
+
 
         String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
         if (selectedMessage != null && userId != null && reactionType != null) {
+            if (reactionType.equals("remove")) {
+                betaMessageService.removeMessageForAll(selectedMessage.getMessageId(), FirebaseAuth.getInstance().getCurrentUser().getUid(), new BetaMessageService.OnMessageUpdateListener() {
+                    @Override
+                    public void onMessageUpdated(String messageId) {
+                        collapse(reactionSelectLayout); // Collapse the selection layout
+                        Toast.makeText(BetaGroupChatActivity.this, "Message removed successfully.", Toast.LENGTH_SHORT).show();
+                        loadMessagesFromFirebase();
+                    }
+
+                    @Override
+                    public void onUpdateFailure(String errorMessage) {
+                        collapse(reactionSelectLayout); // Collapse the selection layout
+                        Toast.makeText(BetaGroupChatActivity.this, "Message remove failed " + errorMessage, Toast.LENGTH_SHORT).show();
+                        loadMessagesFromFirebase();
+                    }
+                });
+                return;
+            }
+
+
+
             if (view.getBackground() instanceof ColorDrawable) {
                 // Check if the background color is blue, indicating selection
                 int backgroundColor = ((ColorDrawable) view.getBackground()).getColor();
