@@ -1,11 +1,15 @@
 package com.hcmute.endsemesterproject.Models;
 
 public class MessageReaction {
+    private String reactionId;
     private String messageId;
     private String userId;
     private String reactType;
 
-    public MessageReaction(String messageId, String userId, String reactType) {
+    public MessageReaction() {}
+
+    public MessageReaction(String reactionId, String messageId, String userId, String reactType) {
+        this.reactionId = reactionId;
         this.messageId = messageId;
         this.userId = userId;
         this.reactType = reactType;
@@ -26,4 +30,6 @@ public class MessageReaction {
     public void setReactType(String reactType) {
         this.reactType = reactType;
     }
+    public String getReactionId() { return reactionId; }
+    public void setReactionId(String reactionId) { this.reactionId = reactionId; }
 }

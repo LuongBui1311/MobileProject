@@ -1,5 +1,6 @@
 package com.hcmute.endsemesterproject.Adapters;
 
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,6 +13,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.hcmute.endsemesterproject.Models.BetaGroupMessage;
 import com.hcmute.endsemesterproject.R;
+import com.hcmute.endsemesterproject.Services.ReactionService;
 import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
 
@@ -26,11 +28,14 @@ public class GroupMessageAdapter extends RecyclerView.Adapter<GroupMessageAdapte
     private static final int MESSAGE_RECEIVED = 2;
     private List<BetaGroupMessage> messageList;
     private String currentUserId;
+    private int selectedItem = RecyclerView.NO_POSITION;
+    private ReactionService reactionService;
 
     // Constructor
     public GroupMessageAdapter(List<BetaGroupMessage> messageList, String currentUserId) {
         this.messageList = messageList;
         this.currentUserId = currentUserId;
+        reactionService = new ReactionService();
     }
 
     @NonNull
@@ -95,6 +100,28 @@ public class GroupMessageAdapter extends RecyclerView.Adapter<GroupMessageAdapte
             // Set default file icon for other file types
             holder.fileIcon.setImageResource(R.drawable.default_file_icon);
         }
+
+        reactionService.getTop3ReactionsString(message.getMessageId(), new ReactionService.OnTop3ReactionsFetchListener() {
+            @Override
+            public void onTop3ReactionsFetched(String top3Reactions) {
+                holder.reactionsTextView.setText(top3Reactions);
+
+            }
+
+            @Override
+            public void onFetchFailure(String errorMessage) {
+                Log.d("reaction failed", "failed to react message");
+            }
+        });
+
+        // Set reactions text
+
+        // Check if the item is selected and set the appropriate state
+        if (position == selectedItem) {
+            holder.itemView.setActivated(true);
+        } else {
+            holder.itemView.setActivated(false);
+        }
     }
 
     // Helper method to extract file name from file URL
@@ -120,10 +147,21 @@ public class GroupMessageAdapter extends RecyclerView.Adapter<GroupMessageAdapte
         }
     }
 
+    // Method to update the currently selected item
+    public void setSelectedItem(int position) {
+        selectedItem = position;
+        notifyDataSetChanged();
+    }
+
+    public BetaGroupMessage getSelectedItem(int position) {
+        return messageList.get(position);
+    }
+
     static class ViewHolder extends RecyclerView.ViewHolder {
         TextView senderName;
         TextView messageText;
         TextView messageTime;
+        TextView reactionsTextView; // Add TextView for reactions
         ImageView messageImage;
         ImageView fileIcon;
         ProgressBar progressBar;
@@ -133,6 +171,7 @@ public class GroupMessageAdapter extends RecyclerView.Adapter<GroupMessageAdapte
             senderName = itemView.findViewById(R.id.textViewSenderName);
             messageText = itemView.findViewById(R.id.textViewMessageContent);
             messageTime = itemView.findViewById(R.id.textViewMessageTime);
+            reactionsTextView = itemView.findViewById(R.id.reactionsTextView); // Initialize reactions TextView
             messageImage = itemView.findViewById(R.id.imageViewMessageImage);
             fileIcon = itemView.findViewById(R.id.imageViewFileIcon);
             progressBar = itemView.findViewById(R.id.progressBar);

@@ -1,22 +1,33 @@
 package com.hcmute.endsemesterproject.Controllers;
 
+import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
+import android.graphics.Color;
+import android.graphics.Rect;
+import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.OpenableColumns;
 import android.util.Log;
+import android.view.GestureDetector;
+import android.view.MotionEvent;
 import android.view.View;
+import android.view.animation.Animation;
+import android.view.animation.Transformation;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -38,10 +49,13 @@ import com.hcmute.endsemesterproject.Models.UserDetails;
 import com.hcmute.endsemesterproject.R;
 import com.hcmute.endsemesterproject.Services.BetaMessageService;
 import com.hcmute.endsemesterproject.Services.GroupService;
+import com.hcmute.endsemesterproject.Services.ReactionService;
 import com.hcmute.endsemesterproject.Services.UserService;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class BetaGroupChatActivity extends AppCompatActivity {
     private Group currentGroup;
@@ -57,7 +71,8 @@ public class BetaGroupChatActivity extends AppCompatActivity {
     private DatabaseReference betaGroupsRef;
     private DatabaseReference messagesRef;
     private GroupMessageAdapter messageAdapter;
-
+    private LinearLayout reactionSelectLayout;
+    private BetaGroupMessage selectedMessage;
     private static final int PICK_FILE_REQUEST = 1;
     private static final String[] SUPPORTED_MIME_TYPES = {
             "image/jpeg",
@@ -83,16 +98,19 @@ public class BetaGroupChatActivity extends AppCompatActivity {
     private boolean isGroupMember = false;
     private UserService userService;
     private BetaMessageService betaMessageService;
+    private ReactionService reactionService;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_beta_group_chat);
 
+
         betaGroupsRef = FirebaseDatabase.getInstance().getReference().child("beta-groups");
         userService = new UserService();
         groupService = new GroupService();
         betaMessageService = new BetaMessageService();
+        reactionService = new ReactionService();
         loadGroupInfo();
 
         sendMessageButton = findViewById(R.id.send_message_button);
@@ -105,6 +123,11 @@ public class BetaGroupChatActivity extends AppCompatActivity {
         groupTitle.setText(currentGroup.getName());
         chatPromtLayout = findViewById(R.id.chat_prompt_layout);
         dotsButton = findViewById(R.id.dots_button);
+        reactionSelectLayout = findViewById(R.id.reaction_select_layout);
+
+        collapse(reactionSelectLayout);
+
+
 
         sendFileButton.setEnabled(false);
         sendMessageButton.setEnabled(false);
@@ -118,6 +141,9 @@ public class BetaGroupChatActivity extends AppCompatActivity {
                 checkMembership();
 
             } else {
+                sendFileButton.setEnabled(true);
+                sendMessageButton.setEnabled(true);
+                messageInput.setEnabled(true);
                 chatPromtLayout.setVisibility(View.GONE);
                 messagesRef = betaGroupsRef.child("private").child(currentGroup.getName()).child("messages");
             }
@@ -170,6 +196,35 @@ public class BetaGroupChatActivity extends AppCompatActivity {
         messageRecyclerView.setAdapter(messageAdapter);
         messageRecyclerView.setLayoutManager(new LinearLayoutManager(this));
 
+        // Set item click listener for RecyclerView
+        // Set item long click listener for RecyclerView
+        messageRecyclerView.addOnItemTouchListener(new RecyclerView.OnItemTouchListener() {
+            GestureDetector gestureDetector = new GestureDetector(BetaGroupChatActivity.this, new GestureDetector.SimpleOnGestureListener() {
+                @Override
+                public void onLongPress(MotionEvent e) {
+                    View childView = messageRecyclerView.findChildViewUnder(e.getX(), e.getY());
+                    int position = messageRecyclerView.getChildAdapterPosition(childView);
+                    if (position != RecyclerView.NO_POSITION) {
+                        // Handle long click event here
+                        onItemLongClick(position);
+                    }
+                }
+            });
+
+            @Override
+            public boolean onInterceptTouchEvent(@NonNull RecyclerView rv, @NonNull MotionEvent e) {
+                gestureDetector.onTouchEvent(e);
+                return false;
+            }
+
+            @Override
+            public void onTouchEvent(@NonNull RecyclerView rv, @NonNull MotionEvent e) {}
+
+            @Override
+            public void onRequestDisallowInterceptTouchEvent(boolean disallowIntercept) {}
+        });
+
+
         dotsButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -208,7 +263,234 @@ public class BetaGroupChatActivity extends AppCompatActivity {
         });
 
         loadMessagesFromFirebase();
+
     }
+
+    private void highlightSelectedReactions(LinearLayout reactionSelectLayout, List<String> selectedReactions) {
+        // Map reaction types to corresponding Unicode emojis
+        Map<String, String> reactionEmojiMap = new HashMap<>();
+        reactionEmojiMap.put("like", "👍");
+        reactionEmojiMap.put("love", "❤️");
+        reactionEmojiMap.put("wow", "😮");
+        reactionEmojiMap.put("relax", "😌");
+        reactionEmojiMap.put("cry", "😭");
+        reactionEmojiMap.put("angry", "😠");
+
+        // Iterate through child views of the reactionSelectLayout
+        for (int i = 0; i < reactionSelectLayout.getChildCount(); i++) {
+            View view = reactionSelectLayout.getChildAt(i);
+            if (view instanceof TextView) {
+                TextView textView = (TextView) view;
+                String emoji = textView.getText().toString();
+                boolean matched = false;
+                // Iterate through selectedReactions
+                for (String reactionType : selectedReactions) {
+                    String emojiFromMap = reactionEmojiMap.get(reactionType);
+                    if (emojiFromMap != null && emojiFromMap.equals(emoji)) {
+                        // Highlight the selected reaction
+                        textView.setBackgroundColor(ContextCompat.getColor(this, R.color.blue));
+                        matched = true;
+                        break; // Exit the loop once the reaction is found and highlighted
+                    }
+                }
+                if (!matched) {
+                    // Set background color to transparent if the reaction is not found in selectedReactions
+                    textView.setBackgroundColor(Color.TRANSPARENT);
+                }
+            }
+        }
+    }
+
+
+
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent event) {
+        if (event.getAction() == MotionEvent.ACTION_DOWN) {
+            if (reactionSelectLayout.getVisibility() == View.VISIBLE) {
+                Rect outRect = new Rect();
+                reactionSelectLayout.getGlobalVisibleRect(outRect);
+                if (!outRect.contains((int) event.getRawX(), (int) event.getRawY())) {
+                    collapse(reactionSelectLayout);
+                    selectedMessage = null;
+                }
+            }
+        }
+        return super.dispatchTouchEvent(event);
+    }
+
+    public void onEmojiClick(View view) {
+        // Handle emoji click events here
+        TextView emojiTextView = (TextView) view;
+        String emoji = emojiTextView.getText().toString();
+
+        // Do something with the clicked emoji, such as sending it as a reaction to a message
+        Log.d("Emoji Clicked", emoji);
+
+        String reactionType = null;
+
+        if (emoji.equals("\uD83D\uDC4D")) {
+            reactionType = "like";
+        } else if (emoji.equals("❤\uFE0F")) {
+            reactionType = "love";
+        } else if (emoji.equals("\uD83D\uDE2E")) {
+            reactionType = "wow";
+        } else if (emoji.equals("\uD83D\uDE0C")) {
+            reactionType = "relax";
+        } else if (emoji.equals("\uD83D\uDE2D")) {
+            reactionType = "cry";
+        } else if (emoji.equals("\uD83D\uDE20")) {
+            reactionType = "angry";
+        }
+
+        String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        if (selectedMessage != null && userId != null && reactionType != null) {
+            if (view.getBackground() instanceof ColorDrawable) {
+                // Check if the background color is blue, indicating selection
+                int backgroundColor = ((ColorDrawable) view.getBackground()).getColor();
+                if (backgroundColor == ContextCompat.getColor(this, R.color.blue)) {
+                    // If the background color is blue, remove the reaction
+                    reactionService.removeReaction(selectedMessage.getMessageId(), userId, reactionType, new ReactionService.OnReactionRemoveListener() {
+                        @Override
+                        public void onReactionRemoved() {
+                            view.setBackgroundColor(Color.TRANSPARENT); // Set background to transparent
+                            collapse(reactionSelectLayout); // Collapse the selection layout
+                            Toast.makeText(BetaGroupChatActivity.this, "Reaction removed successfully.", Toast.LENGTH_SHORT).show();
+                            loadMessagesFromFirebase();
+                        }
+
+                        @Override
+                        public void onRemoveFailure(String errorMessage) {
+                            Toast.makeText(BetaGroupChatActivity.this, "Failed to remove reaction: " + errorMessage, Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                } else {
+                    // If the background color is not blue, add the reaction
+                    reactionService.addReaction(selectedMessage.getMessageId(), userId, reactionType, new ReactionService.OnReactionAddListener() {
+                        @Override
+                        public void onReactionAdded() {
+                            view.setBackgroundColor(ContextCompat.getColor(BetaGroupChatActivity.this, R.color.blue)); // Set background to blue
+                            collapse(reactionSelectLayout); // Collapse the selection layout
+                            Toast.makeText(BetaGroupChatActivity.this, "Reaction added successfully.", Toast.LENGTH_SHORT).show();
+                            loadMessagesFromFirebase();
+
+                        }
+
+                        @Override
+                        public void onAddFailure(String errorMessage) {
+                            Toast.makeText(BetaGroupChatActivity.this, "Failed to add reaction: " + errorMessage, Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                }
+            } else {
+                // If the background is not a color drawable, it's transparent, so add the reaction
+                reactionService.addReaction(selectedMessage.getMessageId(), userId, reactionType, new ReactionService.OnReactionAddListener() {
+                    @Override
+                    public void onReactionAdded() {
+                        view.setBackgroundColor(ContextCompat.getColor(BetaGroupChatActivity.this, R.color.blue)); // Set background to blue
+                        collapse(reactionSelectLayout); // Collapse the selection layout
+                        Toast.makeText(BetaGroupChatActivity.this, "Reaction added successfully.", Toast.LENGTH_SHORT).show();
+                        loadMessagesFromFirebase();
+
+                    }
+
+                    @Override
+                    public void onAddFailure(String errorMessage) {
+                        Toast.makeText(BetaGroupChatActivity.this, "Failed to add reaction: " + errorMessage, Toast.LENGTH_SHORT).show();
+                    }
+                });
+            }
+        } else {
+            Log.d("reaction failed", "some field is null");
+        }
+    }
+
+
+
+
+    private void onItemLongClick(int position) {
+        // Get the selected message
+        selectedMessage = messageAdapter.getSelectedItem(position);
+
+        reactionService.getAllReactionTypesForUserAndMessage(FirebaseAuth.getInstance().getCurrentUser().getUid(), selectedMessage.getMessageId(), new ReactionService.OnReactionTypesFetchListener() {
+            @Override
+            public void onReactionTypesFetched(List<String> reactionTypes) {
+                highlightSelectedReactions(reactionSelectLayout, reactionTypes);
+                expand(reactionSelectLayout);
+            }
+
+            @Override
+            public void onFetchFailure(String errorMessage) {
+
+            }
+        });
+
+        // Log out the ID and text of the selected message
+        if (selectedMessage != null) {
+            Log.d("Selected message ID:", selectedMessage.getMessageId());
+            Log.d("Selected message text:", selectedMessage.getMessageText() + "");
+        } else {
+            Log.e("Selected message:", "null");
+        }
+
+
+    }
+
+    public static void expand(final View v) {
+        int matchParentMeasureSpec = View.MeasureSpec.makeMeasureSpec(((View) v.getParent()).getWidth(), View.MeasureSpec.EXACTLY);
+        int wrapContentMeasureSpec = View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED);
+        v.measure(matchParentMeasureSpec, wrapContentMeasureSpec);
+        final int targetHeight = v.getMeasuredHeight();
+
+        // Older versions of android (pre API 21) cancel animations for views with a height of 0.
+        v.getLayoutParams().height = 1;
+        v.setVisibility(View.VISIBLE);
+        Animation a = new Animation()
+        {
+            @Override
+            protected void applyTransformation(float interpolatedTime, Transformation t) {
+                v.getLayoutParams().height = interpolatedTime == 1
+                        ? LinearLayout.LayoutParams.WRAP_CONTENT
+                        : (int)(targetHeight * interpolatedTime);
+                v.requestLayout();
+            }
+
+            @Override
+            public boolean willChangeBounds() {
+                return true;
+            }
+        };
+
+        // Expansion speed of 1dp/ms
+        a.setDuration((int)(targetHeight / v.getContext().getResources().getDisplayMetrics().density) + 1000);
+        v.startAnimation(a);
+    }
+
+    public static void collapse(final View v) {
+        final int initialHeight = v.getMeasuredHeight();
+
+        Animation a = new Animation()
+        {
+            @Override
+            protected void applyTransformation(float interpolatedTime, Transformation t) {
+                if(interpolatedTime == 1){
+                    v.setVisibility(View.GONE);
+                }else{
+                    v.getLayoutParams().height = initialHeight - (int)(initialHeight * interpolatedTime);
+                    v.requestLayout();
+                }
+            }
+
+            @Override
+            public boolean willChangeBounds() {
+                return true;
+            }
+        };
+
+        // Collapse speed of 1dp/ms
+        a.setDuration((int)(initialHeight / v.getContext().getResources().getDisplayMetrics().density + 500));
+        v.startAnimation(a);
+    }
+
 
     private void checkMembership() {
         groupService.checkMembership(currentGroup.getId(), FirebaseAuth.getInstance().getCurrentUser().getUid(), new GroupService.MembershipCheckListener() {
@@ -306,27 +588,30 @@ public class BetaGroupChatActivity extends AppCompatActivity {
     }
 
     private void loadMessagesFromFirebase() {
-        messagesRef.addValueEventListener(new ValueEventListener() {
+        groupService.getAllMessageIdsInGroup(currentGroup.getId(), new GroupService.MessageIdsFetchListener() {
             @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                messageList.clear(); // Clear existing messages
-                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                    // Deserialize GroupMessage from Firebase snapshot
-                    BetaGroupMessage message = snapshot.getValue(BetaGroupMessage.class);
-                    if (message != null) {
-                        messageList.add(message);
+            public void onMessageIdsFetched(List<String> messageIds) {
+                betaMessageService.getMessagesFromIdList(messageIds, new BetaMessageService.OnMessageListFetchListener() {
+                    @Override
+                    public void onMessageListFetched(List<BetaGroupMessage> messages) {
+                        messageList.clear();
+                        messageList.addAll(messages);
+                        messageAdapter.notifyDataSetChanged();
+                        if (!messageList.isEmpty()) {
+                            messageRecyclerView.smoothScrollToPosition(messageList.size() - 1);
+                        }
                     }
-                }
-                messageAdapter.notifyDataSetChanged(); // Notify adapter about data change
-                if (!messageList.isEmpty()) {
-                    messageRecyclerView.smoothScrollToPosition(messageList.size() - 1);
-                }
+
+                    @Override
+                    public void onFetchFailure(String errorMessage) {
+                        Log.e("BetaGroupChatActivity", "Failed to load messages: " + errorMessage);
+                    }
+                });
             }
 
             @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-                // Handle error
-                Log.e("BetaGroupChatActivity", "Failed to load messages: " + databaseError.getMessage());
+            public void onFetchFailed(Exception e) {
+                Log.e("BetaGroupChatActivity", "Failed to load messages: " + e.getMessage());
             }
         });
     }
@@ -368,6 +653,7 @@ public class BetaGroupChatActivity extends AppCompatActivity {
                         Log.d("BetaGroupChatActivity", "Text message sent successfully");
                         messageInput.setText("");
                         sendMessageButton.setEnabled(true);
+                        loadMessagesFromFirebase();
                     }
 
                     @Override
@@ -424,6 +710,7 @@ public class BetaGroupChatActivity extends AppCompatActivity {
                                                 Log.d("BetaGroupChatActivity", "File message sent successfully");
                                                 clearSelectedFile();
                                                 sendMessageButton.setEnabled(true);
+                                                loadMessagesFromFirebase();
                                             }
 
                                             @Override
