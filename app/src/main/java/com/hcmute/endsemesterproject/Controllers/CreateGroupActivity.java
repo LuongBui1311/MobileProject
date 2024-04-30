@@ -36,6 +36,7 @@ import com.google.firebase.database.ValueEventListener;
 import com.hcmute.endsemesterproject.Adapters.ContactAdapter;
 import com.hcmute.endsemesterproject.Models.Contacts;
 import com.hcmute.endsemesterproject.R;
+import com.hcmute.endsemesterproject.Services.GroupService;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -55,7 +56,8 @@ public class CreateGroupActivity extends AppCompatActivity {
     private List<Contacts> contactsList;
     private ContactAdapter contactAdapter;
     private RadioButton publicRadioButton;
-
+    private EditText editTextGroupDescription;
+    private GroupService groupService;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -66,6 +68,8 @@ public class CreateGroupActivity extends AppCompatActivity {
         groupsRef = FirebaseDatabase.getInstance().getReference().child("beta-groups");
         usersRef = FirebaseDatabase.getInstance().getReference().child("Users");
 
+        groupService = new GroupService();
+
         imageViewVerify  = findViewById(R.id.imageViewVerify);
         progressBarVerify = findViewById(R.id.progressBarVerify);
         editTextGroupName = findViewById(R.id.editTextGroupName);
@@ -74,6 +78,7 @@ public class CreateGroupActivity extends AppCompatActivity {
         buttonCreate.setEnabled(false);
         buttonCancel = findViewById(R.id.buttonCancel);
         publicRadioButton = findViewById(R.id.publicRadioButton);
+        editTextGroupDescription = findViewById(R.id.editTextGroupDescription);
 
         contactIdList = new ArrayList<String>();
         contactsList = new ArrayList<Contacts>();
@@ -158,35 +163,32 @@ public class CreateGroupActivity extends AppCompatActivity {
 
     private void createGroup() {
         String groupName = editTextGroupName.getText().toString();
+        String groupDescription = editTextGroupDescription.getText().toString();
+        String ownerId = FirebaseAuth.getInstance().getCurrentUser().getUid();
         String groupType = publicRadioButton.isChecked() ? "public" : "private";
+        boolean isPublic = groupType.equals("public");
         List<Contacts> contactsList1= contactAdapter.getSelectedContacts();
         List<String> userIdList = new ArrayList<>();
-        userIdList.add(mAuth.getCurrentUser().getUid());
+        userIdList.add(ownerId); // Add owner's ID to the member list
         for (Contacts contacts : contactsList1) {
             userIdList.add(contacts.getId());
         }
-        // do the firebase stuff here
-        DatabaseReference groupsCategoryRef = FirebaseDatabase.getInstance().getReference().child("beta-groups").child(groupType);
-        DatabaseReference groupRef = groupsCategoryRef.child(groupName);
-        groupRef.child("messages");
-        groupRef.child("members").setValue(userIdList)
-                .addOnSuccessListener(new OnSuccessListener<Void>() {
-                    @Override
-                    public void onSuccess(Void aVoid) {
-                        // Group and members added successfully
-                        Toast.makeText(CreateGroupActivity.this, "Group created successfully", Toast.LENGTH_SHORT).show();
-                        // Optionally, navigate to another activity or perform additional actions
-                    }
-                })
-                .addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception e) {
-                        // Failed to create group or add members
-                        Toast.makeText(CreateGroupActivity.this, "Failed to create group: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                    }
-                });
+
+        groupService.createGroup(groupName, groupDescription, isPublic, ownerId, userIdList, new GroupService.GroupOperationListener() {
+            @Override
+            public void onGroupOperationSuccess(String message) {
+                Toast.makeText(CreateGroupActivity.this, "Group created successfully", Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onGroupOperationFailure(String errorMessage) {
+                Toast.makeText(CreateGroupActivity.this, "Failed to create group: " + errorMessage, Toast.LENGTH_SHORT).show();
+            }
+        });
+
         buttonCreate.setEnabled(false);
     }
+
 
     private void loadContactInformations() {
         FirebaseUser currentUser = mAuth.getCurrentUser();

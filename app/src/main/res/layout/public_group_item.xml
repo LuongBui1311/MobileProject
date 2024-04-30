@@ -68,15 +68,6 @@
             android:text="5 members"
             android:textStyle="bold"
             android:textSize="16dp"/>
-
-        <Button
-            android:id="@+id/btnJoinGroup"
-            android:layout_width="wrap_content"
-            android:layout_marginLeft="32dp"
-            android:layout_height="wrap_content"
-            android:text="JOIN"
-            android:focusable="false"
-            android:focusableInTouchMode="false"/>
     </LinearLayout>
 
 </LinearLayout>

@@ -9,12 +9,13 @@ public class BetaGroupMessage {
     private String messageType; // "text", "image", "pdf", etc.
     private String fileUrl; // URL to the file if messageType is "image" or "pdf"
     private String originalFileName; // Add field for original filename
+    private String status;
 
     public BetaGroupMessage() {
         // Default constructor required for Firebase
     }
 
-    public BetaGroupMessage(String messageId, String senderId, String senderName, long timestamp, String messageText, String messageType, String fileUrl, String originalFileName) {
+    public BetaGroupMessage(String messageId, String senderId, String senderName, long timestamp, String messageText, String messageType, String fileUrl, String originalFileName, String status) {
         this.messageId = messageId;
         this.senderId = senderId;
         this.senderName = senderName;
@@ -23,6 +24,7 @@ public class BetaGroupMessage {
         this.messageType = messageType;
         this.fileUrl = fileUrl;
         this.originalFileName = originalFileName;
+        this.status = status;
     }
 
     // Getters and setters
@@ -89,4 +91,7 @@ public class BetaGroupMessage {
     public void setOriginalFileName(String originalFileName) {
         this.originalFileName = originalFileName;
     }
+
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
 }

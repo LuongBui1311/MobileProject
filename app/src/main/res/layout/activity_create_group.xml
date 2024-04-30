@@ -78,6 +78,18 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:text="Group description"
+        android:textStyle="bold"
+        android:textSize="18sp"/>
+    <EditText
+        android:id="@+id/editTextGroupDescription"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Enter group description"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:text="Group type"
         android:textStyle="bold"
         android:textSize="18sp"/>

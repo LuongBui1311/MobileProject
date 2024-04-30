@@ -44,6 +44,15 @@
             android:textSize="12sp"
             android:layout_marginTop="4dp"/>
 
+        <TextView
+            android:id="@+id/reactionsTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="end"
+            android:text="">
+
+        </TextView>
+
         <!-- Updated ImageView for other file types -->
         <ImageView
             android:id="@+id/imageViewFileIcon"
