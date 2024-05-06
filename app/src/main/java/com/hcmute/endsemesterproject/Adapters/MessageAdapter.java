@@ -247,7 +247,7 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MessageV
                                     Intent intent = new Intent(messageViewHolder.itemView.getContext(), MainActivity.class);
                                     messageViewHolder.itemView.getContext().startActivity(intent);
                                 } else if (which == 1){
-                                    Intent intent = new Intent(messageViewHolder.itemView.getContext(), VideoViewerActivity.class);
+                                    Intent intent = new Intent(messageViewHolder.itemView.getContext(), ImageViewerActivity.class);
                                     intent.putExtra("url", userMessagesList.get(position).getMessage());
                                     messageViewHolder.itemView.getContext().startActivity(intent);
                                 } else if (which == 2){
