@@ -87,11 +87,11 @@ public class PhoneLoginActivity extends AppCompatActivity {
             public void onClick(View v) {
                 String phoneNumber = inputPhoneNumber.getText().toString();
                 if (TextUtils.isEmpty(phoneNumber)){
-                    Toast.makeText(PhoneLoginActivity.this, "Please enter your phone number first...", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(PhoneLoginActivity.this, "Please enter your phone !", Toast.LENGTH_SHORT).show();
                 } else {
                     if(validPhoneNumber(phoneNumber)){
                         loadingBar.setTitle("Phone Verification");
-                        loadingBar.setMessage("Please wait while we are authenticating your phone...");
+                        loadingBar.setMessage("Authenticating...");
                         loadingBar.setCanceledOnTouchOutside(false);
                         loadingBar.show();
 
@@ -123,7 +123,7 @@ public class PhoneLoginActivity extends AppCompatActivity {
             public void onVerificationFailed(@NonNull FirebaseException e) {
                 loadingBar.dismiss();
 
-                Toast.makeText(PhoneLoginActivity.this, "Invalid phone number! Please enter correct phone number with your country code...", Toast.LENGTH_SHORT).show();
+                Toast.makeText(PhoneLoginActivity.this, "Invalid phone number!", Toast.LENGTH_LONG).show();
 
                 sendVerificationCodeButton.setVisibility(View.VISIBLE);
                 inputPhoneNumber.setVisibility(View.VISIBLE);
@@ -141,7 +141,7 @@ public class PhoneLoginActivity extends AppCompatActivity {
 
                 loadingBar.dismiss();
 
-                Toast.makeText(PhoneLoginActivity.this, "Code has been sent. Please check and verify...", Toast.LENGTH_SHORT).show();
+                Toast.makeText(PhoneLoginActivity.this, "Code has been sent.", Toast.LENGTH_SHORT).show();
 
                 sendVerificationCodeButton.setVisibility(View.INVISIBLE);
                 inputPhoneNumber.setVisibility(View.INVISIBLE);
@@ -159,7 +159,7 @@ public class PhoneLoginActivity extends AppCompatActivity {
                     public void onComplete(@NonNull Task<AuthResult> task) {
                         if (task.isSuccessful()) {
                             loadingBar.dismiss();
-                            Toast.makeText(PhoneLoginActivity.this, "Congratulations! You're logged in successfully...", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(PhoneLoginActivity.this, "Congratulations!", Toast.LENGTH_SHORT).show();
                             sendUserToMainActivity();
                         } else {
                             String message = task.getException().toString();
