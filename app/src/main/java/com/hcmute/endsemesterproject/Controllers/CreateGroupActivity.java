@@ -262,15 +262,26 @@ public class CreateGroupActivity extends AppCompatActivity {
 
 
     private void verifyGroupName(String groupName) {
-        groupsRef.child("public").child(groupName).addListenerForSingleValueEvent(new ValueEventListener() {
+        DatabaseReference groupsRef = FirebaseDatabase.getInstance().getReference().child("beta-groups");
+
+        // Check for duplicate group name
+        groupsRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                if (dataSnapshot.exists()) {
-                    // The group name already exists in the public category
+                boolean groupNameExists = false;
+                for (DataSnapshot groupSnapshot : dataSnapshot.getChildren()) {
+                    String name = groupSnapshot.child("name").getValue(String.class);
+                    if (name != null && name.equals(groupName)) {
+                        // The group name already exists
+                        groupNameExists = true;
+                        break;
+                    }
+                }
+
+                if (groupNameExists) {
                     showGroupNameExistsMessage(groupName);
                 } else {
-                    // Check if the group name exists in the private category
-                    checkPrivateGroupName(groupName);
+                    showGroupAvailableMessage(groupName);
                 }
             }
 
@@ -282,6 +293,7 @@ public class CreateGroupActivity extends AppCompatActivity {
             }
         });
     }
+
 
     private void checkPrivateGroupName(String groupName) {
         groupsRef.child("private").child(groupName).addListenerForSingleValueEvent(new ValueEventListener() {
