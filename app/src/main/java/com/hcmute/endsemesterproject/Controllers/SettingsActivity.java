@@ -35,6 +35,8 @@ import com.theartofdev.edmodo.cropper.CropImage;
 import com.theartofdev.edmodo.cropper.CropImageView;
 
 import java.util.HashMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import de.hdodenhof.circleimageview.CircleImageView;
 
@@ -184,14 +186,10 @@ public class SettingsActivity extends AppCompatActivity
 
     private void UpdateSettings()
     {
-        String setUserName = userName.getText().toString();
-        String setStatus = userStatus.getText().toString();
+        String setUserName = userName.getText().toString().trim();
+        String setStatus = userStatus.getText().toString().trim();
 
-        if (TextUtils.isEmpty(setUserName))
-        {
-            Toast.makeText(this, "Please write your user name first", Toast.LENGTH_SHORT).show();
-        }
-        else
+        if (isValidName(setUserName))
         {
             HashMap<String, Object> profileMap = new HashMap<>();
             profileMap.put(TableConst.USERS.UID, currentUserID);
@@ -254,6 +252,27 @@ public class SettingsActivity extends AppCompatActivity
                         Toast.makeText(SettingsActivity.this, "Cancel", Toast.LENGTH_SHORT).show();
                     }
                 });
+    }
+
+    private boolean isValidName(String name){
+        if (TextUtils.isEmpty(name))
+        {
+            Toast.makeText(this, "Please write your name first", Toast.LENGTH_SHORT).show();
+            return false;
+        }
+        Pattern pattern = Pattern.compile("^[\\p{L}]+(?:-[\\p{L}]+)?(?:\\s[\\p{L}]+(?:-[\\p{L}]+)?)*$");
+        Matcher matcher = pattern.matcher(name);
+        if(matcher.matches())
+        {
+            Toast.makeText(SettingsActivity.this, name, Toast.LENGTH_SHORT).show();
+            return true ;
+        }
+        else
+        {
+            Toast.makeText(SettingsActivity.this, "Name is incorrect", Toast.LENGTH_SHORT).show();
+            return false;
+        }
+
     }
 
     private void SendUserToMainActivity()
