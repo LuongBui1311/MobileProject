@@ -58,7 +58,7 @@
                 android:layout_height="wrap_content"
                 android:layout_centerHorizontal="true"
                 android:layout_below="@+id/login_password"
-                android:text="Forget Password ?"
+                android:text="Forgot Password ?"
                 android:layout_marginTop="2dp"
                 android:layout_marginLeft="15dp"
                 android:layout_marginRight="23dp"
@@ -153,7 +153,8 @@
                 android:layout_below="@id/phone_login_button"
                 android:layout_marginTop="44dp"
                 android:scaleType="fitCenter"
-                app:srcCompat="@drawable/google" />
+                app:srcCompat="@drawable/google"
+                android:layout_marginLeft="175dp"/>
 
 
         </RelativeLayout>

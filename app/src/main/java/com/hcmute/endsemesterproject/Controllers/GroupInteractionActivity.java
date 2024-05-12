@@ -11,6 +11,7 @@ import android.widget.ImageButton;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
@@ -18,6 +19,11 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 import com.hcmute.endsemesterproject.Models.Group;
 import com.hcmute.endsemesterproject.Models.UserDetails;
 import com.hcmute.endsemesterproject.R;
@@ -68,24 +74,31 @@ public class GroupInteractionActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 if (isNameEditing) {
-                    groupService.updateGroupName(currentGroup.getId(), groupNameEditText.getText().toString(), new GroupService.GroupOperationListener() {
+                    final String newName = groupNameEditText.getText().toString();
+                    verifyGroupName(newName, new VerifyGroupNameListener() {
                         @Override
-                        public void onGroupOperationSuccess(String message) {
-                            Drawable newDrawable = getResources().getDrawable(R.drawable.ic_edit);
-                            editNameButton.setImageDrawable(newDrawable);
-                            groupNameEditText.setEnabled(false);
-                            isNameEditing = false;
-                            Toast.makeText(GroupInteractionActivity.this, message, Toast.LENGTH_SHORT).show();
+                        public void onGroupNameVerified(boolean isAvailable) {
+                            if (isAvailable) {
+                                groupService.updateGroupName(currentGroup.getId(), newName, new GroupService.GroupOperationListener() {
+                                    @Override
+                                    public void onGroupOperationSuccess(String message) {
+                                        Drawable newDrawable = getResources().getDrawable(R.drawable.ic_edit);
+                                        editNameButton.setImageDrawable(newDrawable);
+                                        groupNameEditText.setEnabled(false);
+                                        isNameEditing = false;
+                                        Toast.makeText(GroupInteractionActivity.this, message, Toast.LENGTH_SHORT).show();
+                                    }
 
-                        }
-
-                        @Override
-                        public void onGroupOperationFailure(String errorMessage) {
-                            Toast.makeText(GroupInteractionActivity.this, "Failed: " + errorMessage, Toast.LENGTH_SHORT).show();
-
+                                    @Override
+                                    public void onGroupOperationFailure(String errorMessage) {
+                                        Toast.makeText(GroupInteractionActivity.this, "Failed: " + errorMessage, Toast.LENGTH_SHORT).show();
+                                    }
+                                });
+                            } else {
+                                Toast.makeText(GroupInteractionActivity.this, "Group name already exists", Toast.LENGTH_SHORT).show();
+                            }
                         }
                     });
-
                 } else {
                     Drawable newDrawable = getResources().getDrawable(R.drawable.ic_done);
                     editNameButton.setImageDrawable(newDrawable);
@@ -94,6 +107,7 @@ public class GroupInteractionActivity extends AppCompatActivity {
                 }
             }
         });
+
 
         editDescriptionButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -166,6 +180,43 @@ public class GroupInteractionActivity extends AppCompatActivity {
 
 
     }
+
+    private void verifyGroupName(String groupName, final VerifyGroupNameListener listener) {
+        DatabaseReference groupsRef = FirebaseDatabase.getInstance().getReference().child("beta-groups");
+
+        // Check for duplicate group name
+        groupsRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                boolean groupNameExists = false;
+                for (DataSnapshot groupSnapshot : dataSnapshot.getChildren()) {
+                    String name = groupSnapshot.child("name").getValue(String.class);
+                    if (name != null && name.equals(groupName)) {
+                        // The group name already exists
+                        groupNameExists = true;
+                        break;
+                    }
+                }
+
+                if (groupNameExists) {
+                    listener.onGroupNameVerified(false); // Notify listener that the group name exists
+                } else {
+                    listener.onGroupNameVerified(true); // Notify listener that the group name is available
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+                // Handle errors
+                Toast.makeText(GroupInteractionActivity.this, "Error: " + databaseError.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    interface VerifyGroupNameListener {
+        void onGroupNameVerified(boolean isAvailable);
+    }
+
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {

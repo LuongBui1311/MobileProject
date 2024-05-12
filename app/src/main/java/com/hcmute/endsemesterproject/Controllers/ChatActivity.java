@@ -183,7 +183,7 @@ public class ChatActivity extends AppCompatActivity
         SendFilesButton = (ImageButton) findViewById(R.id.send_files_btn);
         MessageInputText = (EditText) findViewById(R.id.input_message);
 
-        messageAdapter = new MessageAdapter(messagesList);
+        messageAdapter = new MessageAdapter(messagesList, messageReceiverID, messageReceiverName, messageReceiverImage);
         userMessagesList = (RecyclerView) findViewById(R.id.private_messages_list_of_users);
         linearLayoutManager = new LinearLayoutManager(this);
         userMessagesList.setLayoutManager(linearLayoutManager);
